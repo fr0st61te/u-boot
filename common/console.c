@@ -7,7 +7,6 @@
 
 #include <common.h>
 #include <console.h>
-#include <debug_uart.h>
 #include <dm.h>
 #include <stdarg.h>
 #include <iomux.h>
@@ -19,6 +18,7 @@
 #include <exports.h>
 #include <environment.h>
 #include <watchdog.h>
+#include <debug_uart.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

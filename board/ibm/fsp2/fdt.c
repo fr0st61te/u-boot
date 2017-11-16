@@ -1,0 +1,41 @@
+#include <common.h>
+#include <asm/processor.h>
+
+#include <libfdt.h>
+#include <libfdt_env.h>
+#include <fdt_support.h>
+
+static unsigned long get_tbfreq(unsigned long cpufreq)
+{
+	unsigned long tcs, divisor;
+
+	/*
+	 * NOTE: This code assumes the timer source is the CPU clock.  If we
+	 * ever want to use an external clock instead of the CPU clock, we'll
+	 * need to also check CCR1[TSS] to determine which timer source is
+	 * being divided.  But currently we don't have an external clock
+	 * connected.
+	 */
+
+	tcs = (mfspr(SPRN_CCR1) & 0x300) >> 8;
+	divisor = tcs ? 0x2 << tcs : 1;
+
+	/* div with mathematical rounding up */
+	return (cpufreq + divisor/2) / divisor;
+}
+
+int ft_board_setup(void* blob, bd_t *bd)
+{
+	int rc = 0;
+	printf("start %llx size %llx, s: %llx s: %llx\n", (u64)bd->bi_memstart, (u64)bd->bi_memsize, (u64)env_get_bootm_low(),(u64) env_get_bootm_size() );
+	rc = fdt_fixup_memory(blob, (u64)env_get_bootm_low(), (u64) 0x40000000);
+	printf("rc :%i\n", rc);
+	fdt_fixup_ethernet(blob);
+	do_fixup_by_prop_u32(blob, "device_type", "cpu", 4, "clock-frequency",
+			     bd->bi_intfreq, 1);
+	do_fixup_by_prop_u32(blob, "device_type", "cpu", 4,
+			     "timebase-frequency", get_tbfreq(bd->bi_intfreq),
+			     1);
+	return 0;
+}
+

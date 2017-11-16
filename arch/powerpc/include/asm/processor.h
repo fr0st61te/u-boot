@@ -89,9 +89,15 @@
 
 /* Special Purpose Registers (SPRNs)*/
 
+/* PPC440 Architecture is BOOK-E */
+#if defined(CONFIG_440) || defined(CONFIG_47x)
+#define CONFIG_BOOKE
+#endif
+
 #define SPRN_CCR0	0x3B3	/* Core Configuration Register 0 */
 #ifdef CONFIG_BOOKE
 #define SPRN_CCR1	0x378	/* Core Configuration Register for 440 only */
+#define   CCR1_TCS_MASK	0x00000300
 #endif
 #define SPRN_CDBCR	0x3D7	/* Cache Debug Control Register */
 #define SPRN_CTR	0x009	/* Count Register */
@@ -167,6 +173,10 @@
 #define	SPRN_DBDR	0x3f3		/* Debug Data Register */
 #endif
 #define SPRN_DBSR	0x130		/* Book E Debug Status Register */
+#define   DBSR_MRR_MASK	    0x30000000	/* MRR Mask */
+#define   DBSR_MRR_SYS	    0x30000000	/* MRR System */
+#define   DBSR_MRR_CHIP	    0x20000000	/* MRR Chip */
+#define   DBSR_MRR_CORE	    0x10000000	/* MRR Core */
 #define   DBSR_IC	    0x08000000	/* Book E Instruction Completion  */
 #define   DBSR_TIE	    0x01000000	/* Book E Trap Instruction Event */
 #endif /* CONFIG_BOOKE */
@@ -373,16 +383,11 @@
 #else
 #define SPRN_TCR	0x154	/* Book E Timer Control Register */
 #endif /* CONFIG_BOOKE */
-#ifdef CONFIG_E500MC
-#define  TCR_WP(x)		(((64-x)&0x3)<<30)| \
-				(((64-x)&0x3c)<<15) /* WDT Period 2^x clocks*/
-#else
 #define   TCR_WP(x)		(((x)&0x3)<<30)	/* WDT Period */
 #define     WP_2_17		0		/* 2^17 clocks */
 #define     WP_2_21		1		/* 2^21 clocks */
 #define     WP_2_25		2		/* 2^25 clocks */
 #define     WP_2_29		3		/* 2^29 clocks */
-#endif /* CONFIG_E500 */
 #define   TCR_WRC(x)		(((x)&0x3)<<28)	/* WDT Reset Control */
 #define     WRC_NONE		0		/* No reset will occur */
 #define     WRC_CORE		1		/* Core reset will occur */
@@ -420,6 +425,7 @@
 #define     WRS_CORE		1		/* WDT forced core reset */
 #define     WRS_CHIP		2		/* WDT forced chip reset */
 #define     WRS_SYSTEM		3		/* WDT forced system reset */
+#define   TSR_WRS_MASK(x)	(((x)>>28)&0x3)
 #define   TSR_PIS		0x08000000	/* PIT Interrupt Status */
 #define   TSR_FIS		0x04000000	/* FIT Interrupt Status */
 #define SPRN_UMMCR0	0x3A8	/* User Monitor Mode Control Register 0 */
@@ -484,19 +490,16 @@
 #define SPRN_L2CFG0	0x207	/* L2 Cache Configuration Register 0 */
 #define SPRN_L1CSR0	0x3f2	/* L1 Data Cache Control and Status Register 0 */
 #define   L1CSR0_CPE		0x00010000	/* Data Cache Parity Enable */
-#define   L1CSR0_CUL		0x00000400	/* (D-)Cache Unable to Lock */
 #define   L1CSR0_DCLFR		0x00000100	/* D-Cache Lock Flash Reset */
 #define   L1CSR0_DCFI		0x00000002	/* Data Cache Flash Invalidate */
 #define   L1CSR0_DCE		0x00000001	/* Data Cache Enable */
 #define SPRN_L1CSR1	0x3f3	/* L1 Instruction Cache Control and Status Register 1 */
 #define   L1CSR1_CPE		0x00010000	/* Instruction Cache Parity Enable */
-#define   L1CSR1_ICUL		0x00000400	/* I-Cache Unable to Lock */
 #define   L1CSR1_ICLFR		0x00000100	/* I-Cache Lock Flash Reset */
 #define   L1CSR1_ICFI		0x00000002	/* Instruction Cache Flash Invalidate */
 #define   L1CSR1_ICE		0x00000001	/* Instruction Cache Enable */
 #define SPRN_L1CSR2	0x25e	/* L1 Data Cache Control and Status Register 2 */
 #define   L1CSR2_DCWS		0x40000000	/* Data Cache Write Shadow */
-#define   L1CSR2_DCSTASHID  0x000003ff	/* Data Cache Stash ID */
 #define SPRN_L2CSR0	0x3f9	/* L2 Data Cache Control and Status Register 0 */
 #define   L2CSR0_L2E		0x80000000	/* L2 Cache Enable */
 #define   L2CSR0_L2PE		0x40000000	/* L2 Cache Parity/ECC Enable */
@@ -506,15 +509,6 @@
 #define   L2CSR0_L2IO		0x00100000	/* L2 Cache Instruction Only */
 #define   L2CSR0_L2DO		0x00010000	/* L2 Cache Data Only */
 #define   L2CSR0_L2REP		0x00003000	/* L2 Line Replacement Algo */
-
-/* e6500 */
-#define   L2CSR0_L2REP_SPLRUAGE	0x00000000	/* L2REP Streaming PLRU with Aging */
-#define   L2CSR0_L2REP_FIFO	0x00001000	/* L2REP FIFO */
-#define   L2CSR0_L2REP_SPLRU	0x00002000	/* L2REP Streaming PLRU */
-#define   L2CSR0_L2REP_PLRU	0x00003000	/* L2REP PLRU */
-
-#define   L2CSR0_L2REP_MODE	L2CSR0_L2REP_SPLRUAGE
-
 #define   L2CSR0_L2FL		0x00000800	/* L2 Cache Flush */
 #define   L2CSR0_L2LFC		0x00000400	/* L2 Cache Lock Flash Clear */
 #define   L2CSR0_L2LOA		0x00000080	/* L2 Cache Lock Overflow Allocate */
@@ -523,7 +517,6 @@
 
 #define SPRN_TLB0CFG	0x2B0	/* TLB 0 Config Register */
 #define SPRN_TLB1CFG	0x2B1	/* TLB 1 Config Register */
-#define   TLBnCFG_NENTRY_MASK	0x00000fff
 #define SPRN_TLB0PS	0x158	/* TLB 0 Page Size Register */
 #define SPRN_TLB1PS	0x159	/* TLB 1 Page Size Register */
 #define SPRN_MMUCSR0	0x3f4	/* MMU control and status register 0 */
@@ -562,10 +555,18 @@
 #define SPRN_PID1	0x279	/* Process ID Register 1 */
 #define SPRN_PID2	0x27a	/* Process ID Register 2 */
 #define SPRN_MCSR	0x23c	/* Machine Check Syndrome register */
+#if defined(CONFIG_47x)
+#define SPRN_MCSR_C	0x33c	/* Machine Check Syndrome register (Clear) */
+#endif
 #define SPRN_MCAR	0x23d	/* Machine Check Address register */
 #define MCSR_MCS	0x80000000	/* Machine Check Summary */
 #define MCSR_IB		0x40000000	/* Instruction PLB Error */
+#if defined(CONFIG_440)
+#define MCSR_DRB	0x20000000	/* Data Read PLB Error */
+#define MCSR_DWB	0x10000000	/* Data Write PLB Error */
+#else
 #define MCSR_DB		0x20000000	/* Data PLB Error */
+#endif /* defined(CONFIG_440) */
 #define MCSR_TLBP	0x08000000	/* TLB Parity Error */
 #define MCSR_ICP	0x04000000	/* I-Cache Parity Error */
 #define MCSR_DCSP	0x02000000	/* D-Cache Search Parity Error */
@@ -577,16 +578,6 @@
 #define SPRN_MSSCR0	0x3f6
 #define SPRN_MSSSR0	0x3f7
 #endif
-
-#define SPRN_HDBCR0	0x3d0
-#define SPRN_HDBCR1	0x3d1
-#define SPRN_HDBCR2	0x3d2
-#define SPRN_HDBCR3	0x3d3
-#define SPRN_HDBCR4	0x3d4
-#define SPRN_HDBCR5	0x3d5
-#define SPRN_HDBCR6	0x3d6
-#define SPRN_HDBCR7	0x277
-#define SPRN_HDBCR8	0x278
 
 /* Short-hand versions for a number of the above SPRNs */
 
@@ -754,7 +745,7 @@
 #define MAS7	SPRN_MAS7
 #define MAS8 	SPRN_MAS8
 
-#if defined(CONFIG_MPC85xx)
+#if defined(CONFIG_4xx) || defined(CONFIG_44x) || defined(CONFIG_MPC85xx)
 #define DAR_DEAR DEAR
 #else
 #define DAR_DEAR DAR
@@ -841,7 +832,7 @@
 /* System-On-Chip Version Register (SVR) field extraction */
 
 #define SVR_VER(svr)	(((svr) >> 16) & 0xFFFF) /* Version field */
-#define SVR_REV(svr)	(((svr) >>  0) & 0xFF)	 /* Revision field */
+#define SVR_REV(svr)	(((svr) >>  0) & 0xFFFF) /* Revision field */
 
 #define SVR_CID(svr)	(((svr) >> 28) & 0x0F)	 /* Company or manufacturer ID */
 #define SVR_SOCOP(svr)	(((svr) >> 22) & 0x3F)	 /* SOC integration options */
@@ -888,6 +879,9 @@
 #define PVR_405GP_RC	0x40110082
 #define PVR_405GP_RD	0x401100C4
 #define PVR_405GP_RE	0x40110145  /* same as pc405cr rev c */
+#define PVR_405CR_RA	0x40110041
+#define PVR_405CR_RB	0x401100C5
+#define PVR_405CR_RC	0x40110145  /* same as pc405gp rev e */
 #define PVR_405EP_RA	0x51210950
 #define PVR_405GPR_RB	0x50910951
 #define PVR_405EZ_RA	0x41511460
@@ -935,6 +929,8 @@
 #define PVR_460SX_RA_V1 0x13541801 /* 460SX rev A Variant 1 Security disabled */
 #define PVR_460GX_RA    0x13541802 /* 460GX rev A                   */
 #define PVR_460GX_RA_V1 0x13541803 /* 460GX rev A Variant 1 Security disabled */
+#define PVR_476FP	0x11a52000
+#define PVR_476FSP2	0x7FF520C0 /* FSP-2 DD1.0 */
 #define PVR_APM821XX_RA 0x12C41C80 /* APM821XX rev A */
 #define PVR_601		0x00010000
 #define PVR_602		0x00050000
@@ -961,7 +957,6 @@
 #define PVR_VER_E500_V2	0x8021
 #define PVR_VER_E500MC	0x8023
 #define PVR_VER_E5500	0x8024
-#define PVR_VER_E6500	0x8040
 
 #define PVR_86xx	0x80040000
 
@@ -978,6 +973,18 @@
 #define PVR_850		PVR_821
 #define PVR_860		PVR_821
 #define PVR_7400	0x000C0000
+#define PVR_8240	0x00810100
+
+/*
+ * PowerQUICC II family processors report different PVR values depending
+ * on silicon process (HiP3, HiP4, HiP7, etc.)
+ */
+#define PVR_8260	PVR_8240
+#define PVR_8260_HIP3	0x00810101
+#define PVR_8260_HIP4	0x80811014
+#define PVR_8260_HIP7	0x80822011
+#define PVR_8260_HIP7R1 0x80822013
+#define PVR_8260_HIP7RA	0x80822014
 
 /*
  * MPC 52xx
@@ -1022,12 +1029,15 @@
 
 /* System Version Register (SVR) field extraction */
 
+#define SVR_VER(svr)	(((svr) >>  16) & 0xFFFF)	/* Version field */
+#define SVR_REV(svr)	(((svr) >>   0) & 0xFFFF)	/* Revison field */
+
 #define SVR_SUBVER(svr)	(((svr) >>  8) & 0xFF)	/* Process/MFG sub-version */
 
 #define SVR_FAM(svr)	(((svr) >> 20) & 0xFFF)	/* Family field */
 #define SVR_MEM(svr)	(((svr) >> 16) & 0xF)	/* Member field */
 
-#ifdef CONFIG_ARCH_MPC8536
+#ifdef CONFIG_MPC8536
 #define SVR_MAJ(svr)	(((svr) >>  4) & 0x7)	/* Major revision field*/
 #else
 #define SVR_MAJ(svr)	(((svr) >>  4) & 0xF)	/* Major revision field*/
@@ -1074,6 +1084,8 @@
 #define SVR_P1012	0x80E501
 #define SVR_P1013	0x80E700
 #define SVR_P1014	0x80F101
+#define SVR_P1015	0x80E502
+#define SVR_P1016	0x80E503
 #define SVR_P1017	0x80F700
 #define SVR_P1020	0x80E400
 #define SVR_P1021	0x80E401
@@ -1086,47 +1098,20 @@
 #define SVR_P2040	0x821000
 #define SVR_P2041	0x821001
 #define SVR_P3041	0x821103
+#define SVR_P3060	0x820002
 #define SVR_P4040	0x820100
 #define SVR_P4080	0x820000
 #define SVR_P5010	0x822100
 #define SVR_P5020	0x822000
-#define SVR_P5021	0X820500
-#define SVR_P5040	0x820400
-#define SVR_T4240	0x824000
-#define SVR_T4120	0x824001
-#define SVR_T4160	0x824100
-#define SVR_T4080	0x824102
-#define SVR_C291	0x850000
-#define SVR_C292	0x850020
-#define SVR_C293	0x850030
-#define SVR_B4860	0X868000
-#define SVR_G4860	0x868001
-#define SVR_B4460	0x868003
-#define SVR_B4440	0x868100
-#define SVR_G4440	0x868101
-#define SVR_B4420	0x868102
-#define SVR_B4220	0x868103
-#define SVR_T1040	0x852000
-#define SVR_T1041	0x852001
-#define SVR_T1042	0x852002
-#define SVR_T1020	0x852100
-#define SVR_T1021	0x852101
-#define SVR_T1022	0x852102
-#define SVR_T1024	0x854000
-#define SVR_T1023	0x854100
-#define SVR_T1014	0x854400
-#define SVR_T1013	0x854500
-#define SVR_T2080	0x853000
-#define SVR_T2081	0x853100
 
 #define SVR_8610	0x80A000
 #define SVR_8641	0x809000
 #define SVR_8641D	0x809001
 
 #define SVR_9130	0x860001
+#define SVR_9130_E	0x860801
 #define SVR_9131	0x860000
-#define SVR_9132	0x861000
-#define SVR_9232	0x861400
+#define SVR_9131_E	0x860800
 
 #define SVR_Unknown	0xFFFFFF
 
@@ -1155,6 +1140,21 @@ n:
 
 #define tlbie(v)	asm volatile("tlbie %0 \n sync" : : "r" (v))
 
+#if !defined(__ASSEMBLY__)
+static inline void mtdcrx(unsigned long offset, unsigned long value)
+{
+	asm volatile ("mtdcrx %0,%1" : : "r" (offset), "r" (value));
+}
+
+static inline unsigned long mfdcrx(unsigned long offset)
+{
+	unsigned long rval;
+	asm volatile ("mfdcrx %0,%1" : "=r" (rval) : "r" (offset));
+	return rval;
+}
+
+#endif /* __ASSEMBLY__ */
+
 /* Segment Registers */
 
 #define SR0	0
@@ -1181,17 +1181,9 @@ struct cpu_type {
 	u32 soc_ver;
 	u32 num_cores;
 	u32 mask;	/* which cpu(s) actually exist */
-#ifdef CONFIG_HETROGENOUS_CLUSTERS
-	u32 dsp_num_cores;
-	u32 dsp_mask;	/* which DSP cpu(s) actually exist */
-#endif
 };
 
 struct cpu_type *identify_cpu(u32 ver);
-int fixup_cpu(void);
-
-int fsl_qoriq_core_to_cluster(unsigned int core);
-int fsl_qoriq_dsp_core_to_cluster(unsigned int core);
 
 #if defined(CONFIG_MPC85xx) || defined(CONFIG_MPC86xx)
 #define CPU_TYPE_ENTRY(n, v, nc) \
@@ -1332,23 +1324,35 @@ void ll_puts(const char *);
 /* In misc.c */
 void _nmask_and_or_msr(unsigned long nmask, unsigned long or_val);
 
-int prt_83xx_rsr(void);
-
 #endif /* ndef ASSEMBLY*/
 
 #ifdef CONFIG_MACH_SPECIFIC
-#if defined(CONFIG_WALNUT)
+#if defined(CONFIG_8xx)
+#define _machine _MACH_8xx
+#define have_of 0
+#elif defined(CONFIG_OAK)
+#define _machine _MACH_oak
+#define have_of	0
+#elif defined(CONFIG_WALNUT)
 #define _machine _MACH_walnut
+#define have_of 0
+#elif defined(CONFIG_APUS)
+#define _machine _MACH_apus
+#define have_of 0
+#elif defined(CONFIG_GEMINI)
+#define _machine _MACH_gemini
+#define have_of 0
+#elif defined(CONFIG_8260)
+#define _machine _MACH_8260
+#define have_of 0
+#elif defined(CONFIG_SANDPOINT)
+#define _machine _MACH_sandpoint
+#elif defined(CONFIG_HIDDEN_DRAGON)
+#define _machine _MACH_hidden_dragon
 #define have_of 0
 #else
 #error "Machine not defined correctly"
 #endif
 #endif /* CONFIG_MACH_SPECIFIC */
-
-#if defined(CONFIG_MPC85xx)
- #define EPAPR_MAGIC	(0x45504150)
-#else
- #define EPAPR_MAGIC	(0x65504150)
-#endif
 
 #endif /* __ASM_PPC_PROCESSOR_H */

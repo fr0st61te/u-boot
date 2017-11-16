@@ -18,8 +18,10 @@ static struct env_driver *env_driver_lookup(enum env_location loc)
 
 	drv = ll_entry_start(struct env_driver, env_driver);
 	for (entry = drv; entry != drv + n_ents; entry++) {
-		if (loc == entry->location)
+		if (loc == entry->location) {
+
 			return entry;
+		}
 	}
 
 	/* Not found */

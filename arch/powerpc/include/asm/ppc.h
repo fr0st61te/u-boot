@@ -13,9 +13,6 @@
 
 #ifndef __ASSEMBLY__
 
-#if defined(CONFIG_8xx)
-#include <asm/8xx_immap.h>
-#endif
 #ifdef CONFIG_MPC86xx
 #include <mpc86xx.h>
 #include <asm/immap_86xx.h>
@@ -28,6 +25,9 @@
 #include <mpc83xx.h>
 #include <asm/immap_83xx.h>
 #endif
+#ifdef	CONFIG_4xx
+#include <asm/ppc4xx.h>
+#endif
 #ifdef CONFIG_SOC_DA8XX
 #include <asm/arch/hardware.h>
 #endif
@@ -38,27 +38,17 @@
 #include <asm/arch/immap_lsch2.h>
 #endif
 
-#include <asm/processor.h>
+uint get_pvr(void);
+uint get_svr(void);
+uint rd_ic_cst(void);
+void wr_ic_cst(uint);
+void wr_ic_adr(uint);
+uint rd_dc_cst(void);
+void wr_dc_cst(uint);
+void wr_dc_adr(uint);
 
-#if defined(CONFIG_8xx)
-static inline uint get_immr(uint mask)
-{
-	uint immr = mfspr(SPRN_IMMR);
-
-	return mask ? (immr & mask) : immr;
-}
-#endif
-static inline uint get_pvr(void)
-{
-	return mfspr(PVR);
-}
-
-static inline uint get_svr(void)
-{
-	return mfspr(SVR);
-}
-
-#if defined(CONFIG_MPC85xx)	|| \
+#if defined(CONFIG_4xx)	|| \
+	defined(CONFIG_MPC85xx)	|| \
 	defined(CONFIG_MPC86xx)	|| \
 	defined(CONFIG_MPC83xx)
 unsigned char	in8(unsigned int);
@@ -103,28 +93,6 @@ static inline ulong get_ddr_freq(ulong dummy)
 #else
 ulong get_ddr_freq(ulong);
 #endif
-
-static inline unsigned long get_msr(void)
-{
-	unsigned long msr;
-
-	asm volatile ("mfmsr %0" : "=r" (msr) : );
-
-	return msr;
-}
-
-static inline void set_msr(unsigned long msr)
-{
-	asm volatile ("mtmsr %0" : : "r" (msr));
-}
-
-#ifdef CONFIG_CMD_REGINFO
-void print_reginfo(void);
-#endif
-
-void interrupt_init_cpu(unsigned *);
-void timer_interrupt_cpu(struct pt_regs *);
-unsigned long search_exception_table(unsigned long addr);
 
 #endif /* !__ASSEMBLY__ */
 

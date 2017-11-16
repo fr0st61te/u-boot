@@ -1,0 +1,52 @@
+menu "ppc4xx CPU"
+	depends on 4xx
+
+config SYS_CPU
+	default "4xx"
+
+choice
+	prompt "Target select"
+	optional
+
+config SOC_IBM_FSP2
+	bool "support fsp2"
+	select 440
+	select 47x
+	select CMD_SETGETDCR
+	select PANIC_HANG
+	select IBM_EMAC4
+	select BOARD_EARLY_INIT_F
+	select OF_LIBFDT
+	select OF_BOARD_SETUP
+	select CMD_FDT
+
+endchoice
+
+config 440
+	bool
+
+config 47x
+	bool
+
+config SDRAM_PPC4xx_IBM_DDR
+	bool
+
+config SDRAM_PPC4xx_IBM_DDR2
+	bool
+
+config CMD_SETGETDCR
+	bool
+
+config SYS_PERIPHERAL_BASE
+	bool
+
+config IOP480
+	bool
+
+config SYS_EXT_SERIAL_CLOCK
+	int "clock"
+	default 20833333
+
+source "board/ibm/fsp2/Kconfig"
+
+endmenu

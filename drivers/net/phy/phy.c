@@ -773,6 +773,7 @@ int phy_reset(struct phy_device *phydev)
 	}
 #endif
 
+	printf("phy write %x %x\n", phydev, devad);
 	if (phy_write(phydev, devad, MII_BMCR, BMCR_RESET) < 0) {
 		debug("PHY reset failed\n");
 		return -1;
@@ -786,6 +787,7 @@ int phy_reset(struct phy_device *phydev)
 	 * auto-clearing).  This should happen within 0.5 seconds per the
 	 * IEEE spec.
 	 */
+	printf("phy read\n");
 	reg = phy_read(phydev, devad, MII_BMCR);
 	while ((reg & BMCR_RESET) && timeout--) {
 		reg = phy_read(phydev, devad, MII_BMCR);
@@ -809,12 +811,14 @@ int miiphy_reset(const char *devname, unsigned char addr)
 {
 	struct mii_dev *bus = miiphy_get_dev_by_name(devname);
 	struct phy_device *phydev;
+	printf("get dev by name\n");
 
 	/*
 	 * miiphy_reset was only used on standard PHYs, so we'll fake it here.
 	 * If later code tries to connect with the right interface, this will
 	 * be corrected by get_phy_device in phy_connect()
 	 */
+	printf("get phy device\n");
 	phydev = get_phy_device(bus, addr, PHY_INTERFACE_MODE_MII);
 
 	return phy_reset(phydev);

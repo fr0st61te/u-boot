@@ -30,6 +30,20 @@ void __board_show_activity (ulong dummy)
 
 static unsigned decrementer_count; /* count value for 1e6/HZ microseconds */
 
+static __inline__ unsigned long get_msr (void)
+{
+	unsigned long msr;
+
+	asm volatile ("mfmsr %0":"=r" (msr):);
+
+	return msr;
+}
+
+static __inline__ void set_msr (unsigned long msr)
+{
+	asm volatile ("mtmsr %0"::"r" (msr));
+}
+
 static __inline__ unsigned long get_dec (void)
 {
 	unsigned long val;
@@ -38,7 +52,6 @@ static __inline__ unsigned long get_dec (void)
 
 	return val;
 }
-
 
 static __inline__ void set_dec (unsigned long val)
 {
