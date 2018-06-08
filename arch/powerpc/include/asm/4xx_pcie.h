@@ -10,7 +10,6 @@
 
 #include <asm/ppc4xx.h>
 #include <pci.h>
-
 #define DCRN_SDR0_CFGADDR	0x00e
 #define DCRN_SDR0_CFGDATA	0x00f
 
@@ -332,60 +331,7 @@ int ppc4xx_init_pcie_endport(int port);
 void ppc4xx_setup_pcie_rootpoint(struct pci_controller *hose, int port);
 int ppc4xx_setup_pcie_endpoint(struct pci_controller *hose, int port);
 int pcie_hose_scan(struct pci_controller *hose, int bus);
-
-/*
- * Function to determine root port or endport from env variable.
- */
-static inline int is_end_point(int port)
-{
-	char s[10], *tk;
-	char *pcie_mode = getenv("pcie_mode");
-
-	if (pcie_mode == NULL)
-		return 0;
-
-	strcpy(s, pcie_mode);
-	tk = strtok(s, ":");
-
-	switch (port) {
-	case 0:
-		if (tk != NULL) {
-			if (!(strcmp(tk, "ep") && strcmp(tk, "EP")))
-				return 1;
-			else
-				return 0;
-		}
-		else
-			return 0;
-
-	case 1:
-		tk = strtok(NULL, ":");
-		if (tk != NULL) {
-			if (!(strcmp(tk, "ep") && strcmp(tk, "EP")))
-				return 1;
-			else
-				return 0;
-		}
-		else
-			return 0;
-
-	case 2:
-		tk = strtok(NULL, ":");
-		if (tk != NULL)
-			tk = strtok(NULL, ":");
-		if (tk != NULL) {
-			if (!(strcmp(tk, "ep") && strcmp(tk, "EP")))
-				return 1;
-			else
-				return 0;
-		}
-		else
-			return 0;
-	}
-
-	return 0;
-}
-
+int is_end_point(int port);
 #if defined(PCIE0_SDR)
 static inline u32 sdr_base(int port)
 {

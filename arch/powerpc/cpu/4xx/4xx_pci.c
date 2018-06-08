@@ -830,13 +830,12 @@ static int pci_440_init (struct pci_controller *hose)
 
 void pci_init_board(void)
 {
-	int busno = 0;
-
 	/*
 	 * Only init PCI when either master or target functionality
 	 * is selected.
 	 */
 #if defined(CONFIG_SYS_PCI_MASTER_INIT) || defined(CONFIG_SYS_PCI_TARGET_INIT)
+	int busno = 0;
 	busno = pci_440_init(&ppc440_hose);
 	if (busno < 0)
 		return;

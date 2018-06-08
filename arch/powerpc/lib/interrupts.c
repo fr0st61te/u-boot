@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <asm/processor.h>
+#include <asm/interrupt.h>
 #include <watchdog.h>
 #ifdef CONFIG_LED_STATUS
 #include <status_led.h>

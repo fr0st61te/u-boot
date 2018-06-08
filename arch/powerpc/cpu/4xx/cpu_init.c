@@ -14,6 +14,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+void reset_4xx_watchdog(void);
+
 #ifndef CONFIG_SYS_PLL_RECONFIG
 #define CONFIG_SYS_PLL_RECONFIG	0
 #endif

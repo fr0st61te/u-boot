@@ -25,6 +25,64 @@
     defined(CONFIG_PCI) && !defined(CONFIG_PCI_DISABLE_PCIE)
 
 #include <asm/4xx_pcie.h>
+#include <stdio.h>
+
+/*
+ * Function to determine root port or endport from env variable.
+ */
+int is_end_point(int port)
+{
+	char s[10], *tk;
+	char *pcie_mode = getenv("pcie_mode");
+
+	if (pcie_mode == NULL)
+		return 0;
+
+	strcpy(s, pcie_mode);
+	tk = strtok(s, ":");
+
+	switch (port) {
+	case 0:
+		if (tk != NULL) {
+			if (!(strcmp(tk, "ep") && strcmp(tk, "EP")))
+				return 1;
+			else
+				return 0;
+		}
+		else
+			return 0;
+
+	case 1:
+		tk = strtok(NULL, ":");
+		if (tk != NULL) {
+			if (!(strcmp(tk, "ep") && strcmp(tk, "EP")))
+				return 1;
+			else
+				return 0;
+		}
+		else
+			return 0;
+
+	case 2:
+		tk = strtok(NULL, ":");
+		if (tk != NULL)
+			tk = strtok(NULL, ":");
+		if (tk != NULL) {
+			if (!(strcmp(tk, "ep") && strcmp(tk, "EP")))
+				return 1;
+			else
+				return 0;
+		}
+		else
+			return 0;
+	}
+
+	return 0;
+}
+
+
+
+
 
 enum {
 	PTYPE_ENDPOINT		= 0x0,

@@ -60,7 +60,6 @@
 #include <asm/ppc476fsp2.h>
 #endif
 
-
 /*
  * Common registers for all SoC's
  */

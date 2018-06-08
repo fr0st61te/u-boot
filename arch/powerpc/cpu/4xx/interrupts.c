@@ -56,7 +56,7 @@ static __inline__ void set_evpr(unsigned long val)
 }
 #endif /* defined(CONFIG_440 */
 
-int interrupt_init_cpu (unsigned *decrementer_count)
+void interrupt_init_cpu(unsigned *decrementer_count)
 {
 	int vec;
 	unsigned long val;
@@ -119,8 +119,6 @@ int interrupt_init_cpu (unsigned *decrementer_count)
 	 * Call uic or xilinx_irq pic_enable
 	 */
 	pic_enable();
-
-	return (0);
 }
 
 void timer_interrupt_cpu(struct pt_regs *regs)

@@ -93,6 +93,7 @@ int pci_arbiter_enabled(void)
 	mfsdr(SDR0_PCI0, val);
 	return (val & SDR0_PCI0_PAE_MASK);
 #endif
+	return 0;
 }
 #endif
 
@@ -677,19 +678,19 @@ unsigned long get_tbclk (void)
 
 
 #if defined(CONFIG_WATCHDOG)
-void watchdog_reset(void)
-{
-	int re_enable = disable_interrupts();
-	reset_4xx_watchdog();
-	if (re_enable) enable_interrupts();
-}
-
 void reset_4xx_watchdog(void)
 {
 	/*
 	 * Clear TSR(WIS) bit
 	 */
 	mtspr(SPRN_TSR, 0x40000000);
+}
+
+void watchdog_reset(void)
+{
+	int re_enable = disable_interrupts();
+	reset_4xx_watchdog();
+	if (re_enable) enable_interrupts();
 }
 #endif	/* CONFIG_WATCHDOG */
 

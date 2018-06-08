@@ -305,6 +305,8 @@ typedef struct emac_4xx_hw_st {
     defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
     defined(CONFIG_460EX) || defined(CONFIG_460GT)
 #define EMAC0_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0E00)
+#elif defined(CONFIG_47x)
+#define EMAC0_BASE		(CONFIG_SYS_PERIPHERAL_BASE)
 #else
 #define EMAC0_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0800)
 #endif
@@ -314,10 +316,6 @@ typedef struct emac_4xx_hw_st {
 #else
 #define EMAC0_BASE		0xEF600800
 #endif
-#endif
-
-#if defined(CONFIG_47x)
-#define EMAC0_BASE	(CONFIG_SYS_PERIPHERAL_BASE)
 #endif
 
 #if defined(CONFIG_440EPX)

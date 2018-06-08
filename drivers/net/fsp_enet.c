@@ -83,6 +83,7 @@ extern int emac4_mdio_read(struct mii_dev *bus, int port_addr, int dev_addr, int
 extern int emac4_mdio_write(struct mii_dev *bus, int port_addr, int dev_addr, int regnum, u16 value);
 extern int phy_setup_aneg(char *devname, unsigned char addr);
 extern void miiphy_set_curr_emac_offset(unsigned long emac_offset);
+extern void wback_inv_dcache_range(ulong addr, ulong size);
 static void enet_wback_inv(void *addr, int size)
 {
 	wback_inv_dcache_range((ulong)addr, (ulong)addr + size);

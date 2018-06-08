@@ -34,6 +34,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+extern void touch_l2cache_range(ulong addr, ulong size);
+extern void flush_l2cache_range(ulong addr, ulong size);
+
+
 /* FIXME make each block configurable via spl_config environment key */
 static void unit_reset_release(void)
 {

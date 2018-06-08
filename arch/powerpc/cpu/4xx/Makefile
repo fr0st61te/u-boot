@@ -13,24 +13,13 @@ obj-y	+= dcr.o
 obj-y	+= kgdb.o
 
 obj-y	+= 40x_spd_sdram.o
-ifndef CONFIG_SPL_BUILD
-obj-y	+= 44x_spd_ddr.o
-endif
-#obj-$(CONFIG_SDRAM_PPC4xx_IBM_DDR2) += 44x_spd_ddr2.o
-#obj-$(CONFIG_PPC4xx_DDR_AUTOCALIBRATION) += 4xx_ibm_ddr2_autocalib.o
 obj-y	+= 4xx_pci.o
 obj-y	+= 4xx_pcie.o
-obj-y	+= bedbug_405.o
-obj-$(CONFIG_CMD_CHIP_CONFIG)	+= cmd_chip_config.o
+obj-y	+= 4xx_uart.o
 obj-y	+= cpu.o
 obj-y	+= cpu_init.o
-obj-y	+= denali_data_eye.o
-obj-y	+= denali_spd_ddr2.o
-obj-y	+= ecc.o
-obj-$(CONFIG_CMD_ECCTEST) += cmd_ecctest.o
 obj-y	+= fdt.o
 obj-y	+= interrupts.o
-obj-$(CONFIG_CMD_REGINFO) += reginfo.o
 obj-y	+= sdram.o
 obj-y	+= speed.o
 obj-y	+= tlb.o
@@ -39,9 +28,10 @@ obj-y	+= usb.o
 obj-y	+= usb_ohci.o
 obj-y	+= uic.o
 obj-y	+= reginfo.o
-#TODO : serial work
 obj-y	+= fsp2_uart.o
-obj-y	+= 4xx_uart.o
+obj-$(CONFIG_CMD_REGINFO) += reginfo.o
+obj-$(CONFIG_CMD_CHIP_CONFIG)	+= cmd_chip_config.o
 ifdef CONFIG_SPL_BUILD
-obj-y += spl_boot.o
+obj-y	+= 44x_spd_ddr.o
+obj-y	+= spl_boot.o
 endif
