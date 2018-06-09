@@ -28,7 +28,6 @@ obj-y	+= usb.o
 obj-y	+= usb_ohci.o
 obj-y	+= uic.o
 obj-y	+= reginfo.o
-obj-y	+= fsp2_uart.o
 obj-$(CONFIG_CMD_REGINFO) += reginfo.o
 obj-$(CONFIG_CMD_CHIP_CONFIG)	+= cmd_chip_config.o
 ifdef CONFIG_SPL_BUILD

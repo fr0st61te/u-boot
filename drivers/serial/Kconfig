@@ -542,6 +542,13 @@ config MPC8XX_CONS
 	depends on 8xx
 	default y
 
+config FSP2_SERIAL
+	bool "FSP2 Serial driver"
+	depends on SOC_IBM_FSP2
+	default y
+	help
+	  Serial driver for ppc 476 based fsp2 soc.
+
 choice
 	prompt "Console port"
 	default 8xx_CONS_SMC1
