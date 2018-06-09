@@ -29,8 +29,11 @@
 #include <serial.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-#define CNTRL_DCR_BASE 0x0b0
-#define cntrl0		(CNTRL_DCR_BASE+0x3b)	/* Control 0 register		*/
+
+/* Control 0 register */
+#define cntrl0		(CNTRL_DCR_BASE + 0x3b)
+#define CNTRL_DCR_BASE		0x0b0
+
 #define UART_DATA_REG		0x00
 #define UART_DL_LSB		0x00
 #define UART_DL_MSB		0x01
@@ -46,19 +49,19 @@ DECLARE_GLOBAL_DATA_PTR;
 #define OPB_BUS_CLOCK           83333333
 #define SERIAL_CLOCK            (OPB_BUS_CLOCK/4)
 
-#define asyncLSRDataReady1            0x01
-#define asyncLSROverrunError1         0x02
-#define asyncLSRParityError1          0x04
-#define asyncLSRFramingError1         0x08
-#define asyncLSRBreakInterrupt1       0x10
-#define asyncLSRTxHoldEmpty1          0x20
-#define asyncLSRTxShiftEmpty1         0x40
-#define asyncLSRRxFifoError1          0x80
+#define DATA_READY		0x01
+#define OVERRUN_ERROR		0x02
+#define PARITY_ERROR		0x04
+#define FRAMING_ERROR		0x08
+#define BREAK_INTERRUPT		0x10
+#define HOLD_EMPTY		0x20
+#define TX_SHIFT_EMPTY		0x40
+#define RX_FIFO_ERROR		0x80
 
-void fsp2_setbrg (void)
+void fsp2_setbrg(void)
 {
-        unsigned short bdiv;
-        unsigned long udiv;
+	unsigned short bdiv;
+	unsigned long udiv;
 	unsigned long tmp;
 	unsigned long clk;
 
@@ -67,67 +70,75 @@ void fsp2_setbrg (void)
 	tmp = gd->baudrate * udiv * 16;
 	bdiv = (clk + tmp / 2) / tmp;
 
-	out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x80);	/* set DLAB bit */
-	out8(UART0_MMIO_BASE + UART_DL_LSB, bdiv);		/* set baudrate divisor */
-	out8(UART0_MMIO_BASE + UART_DL_MSB, bdiv >> 8);		/* set baudrate divisor */
-	out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x03);	/* clear DLAB; set 8 bits, no parity */
+	/* set DLAB bit */
+	out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x80);
+	/* set baudrate divisor */
+	out8(UART0_MMIO_BASE + UART_DL_LSB, bdiv);
+	/* set baudrate divisor */
+	out8(UART0_MMIO_BASE + UART_DL_MSB, bdiv >> 8);
+	/* clear DLAB; set 8 bits, no parity */
+	out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x03);
 }
 
-void fsp2_putc (const char c)
+void fsp2_putc(const char c)
 {
-        int i;
-        if (c == '\n')
-                serial_putc ('\r');
-        for (i = 1; i < 3500; i++) {
-                if ((in8(UART0_MMIO_BASE + UART_LINE_STATUS) & 0x20) == 0x20)
-                        break;
-                udelay (100);
-        }
-        out8(UART0_MMIO_BASE + UART_DATA_REG, c);  /* put character out */
+	int i;
+	if (c == '\n')
+		serial_putc ('\r');
+	for (i = 1; i < 3500; i++) {
+		if ((in8(UART0_MMIO_BASE + UART_LINE_STATUS) & 0x20) == 0x20)
+			break;
+		udelay (100);
+	}
+	/* put character out */
+	out8(UART0_MMIO_BASE + UART_DATA_REG, c);
 }
 
-void fsp2_puts (const char *s)
+void fsp2_puts(const char *s)
 {
 	while (*s) {
 		serial_putc (*s++);
 	}
 }
 
-int fsp2_getc (void)
+int fsp2_getc(void)
 {
-        unsigned char status = 0;
-        while (1) {
+	unsigned char status = 0;
+	while (1) {
 #if defined(CONFIG_HW_WATCHDOG)
-                WATCHDOG_RESET ();      /* Reset HW Watchdog, if needed */
+	WATCHDOG_RESET ();      /* Reset HW Watchdog, if needed */
 #endif  /* CONFIG_HW_WATCHDOG */
-                status = in8 (UART0_MMIO_BASE + UART_LINE_STATUS);
-                if ((status & asyncLSRDataReady1) != 0x0) {
-                        break;
-                }
-                if ((status & ( asyncLSRFramingError1 |
-                                asyncLSROverrunError1 |
-                                asyncLSRParityError1  |
-                                asyncLSRBreakInterrupt1 )) != 0) {
-                        out8(UART0_MMIO_BASE + UART_LINE_STATUS,
-                              asyncLSRFramingError1 |
-                              asyncLSROverrunError1 |
-                              asyncLSRParityError1  |
-                              asyncLSRBreakInterrupt1);
-                }
-        }
-        return (0x000000ff & (int) in8 (UART0_MMIO_BASE));
+		status = in8 (UART0_MMIO_BASE + UART_LINE_STATUS);
+		if ((status & DATA_READY) != 0x0) {
+			break;
+		}
+		if ((status & ( FRAMING_ERROR |
+				OVERRUN_ERROR |
+				PARITY_ERROR  |
+				BREAK_INTERRUPT )) != 0) {
+			out8(UART0_MMIO_BASE + UART_LINE_STATUS,
+			      FRAMING_ERROR |
+			      OVERRUN_ERROR |
+			      PARITY_ERROR  |
+			      BREAK_INTERRUPT);
+		}
+	}
+	return (0x000000ff & (int)in8(UART0_MMIO_BASE));
 }
 
 int fsp2_tstc (void)
 {
 	unsigned char status;
 	status = in8(UART0_MMIO_BASE + UART_LINE_STATUS);
-	if ((status & asyncLSRDataReady1) != 0x0) {
+	if ((status & DATA_READY) != 0x0) {
 		return (1);
 	}
 
-	if ((status & ( asyncLSRFramingError1 | asyncLSROverrunError1 | asyncLSRParityError1 | asyncLSRBreakInterrupt1 )) != 0) {
-		out8(UART0_MMIO_BASE + UART_LINE_STATUS, asyncLSRFramingError1 | asyncLSROverrunError1 | asyncLSRParityError1 | asyncLSRBreakInterrupt1);
+	if ((status & (FRAMING_ERROR | OVERRUN_ERROR |
+			 PARITY_ERROR | BREAK_INTERRUPT )) != 0) {
+		out8(UART0_MMIO_BASE + UART_LINE_STATUS,
+				FRAMING_ERROR | OVERRUN_ERROR |
+				PARITY_ERROR | BREAK_INTERRUPT);
 	}
 
 	return 0;
@@ -138,16 +149,26 @@ int fsp2_init (void)
         unsigned short bdiv;
 
 	bdiv = (SERIAL_CLOCK/16)/gd->baudrate;
-        out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x80);	/* set DLAB bit */
-        out8(UART0_MMIO_BASE + UART_DL_LSB, bdiv);		/* set baudrate divisor */
-        out8(UART0_MMIO_BASE + UART_DL_MSB, bdiv >> 8);		/* set baudrate divisor */
-        out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x03);	/* clear DLAB; set 8 bits, no parity */
-        out8(UART0_MMIO_BASE + UART_FIFO_CONTROL, 0x00);	/* disable FIFO */
-        out8(UART0_MMIO_BASE + UART_MODEM_CONTROL, 0x00);	/* no modem control DTR RTS */
-        in8(UART0_MMIO_BASE + UART_LINE_STATUS);		/* clear line status */
-        in8(UART0_MMIO_BASE + UART_DATA_REG);			/* read receive buffer */
-        out8(UART0_MMIO_BASE + UART_SCRATCH, 0x00);		/* set scratchpad */
-        out8(UART0_MMIO_BASE + UART_INT_ENABLE, 0x00);		/* set interrupt enable reg */
+	/* set DLAB bit */
+	out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x80);
+	/* set baudrate divisor */
+	out8(UART0_MMIO_BASE + UART_DL_LSB, bdiv);
+	/* set baudrate divisor */
+	out8(UART0_MMIO_BASE + UART_DL_MSB, bdiv >> 8);
+	/* clear DLAB; set 8 bits, no parity */
+	out8(UART0_MMIO_BASE + UART_LINE_CONTROL, 0x03);
+	/* disable FIFO */
+	out8(UART0_MMIO_BASE + UART_FIFO_CONTROL, 0x00);
+	/* no modem control DTR RTS */
+	out8(UART0_MMIO_BASE + UART_MODEM_CONTROL, 0x00);
+	/* clear line status */
+	in8(UART0_MMIO_BASE + UART_LINE_STATUS);
+	/* read receive buffer */
+	in8(UART0_MMIO_BASE + UART_DATA_REG);
+	/* set scratchpad */
+	out8(UART0_MMIO_BASE + UART_SCRATCH, 0x00);
+	/* set interrupt enable reg */
+	out8(UART0_MMIO_BASE + UART_INT_ENABLE, 0x00);
 
 	return 0;
 }
