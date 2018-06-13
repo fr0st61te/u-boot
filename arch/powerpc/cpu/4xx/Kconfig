@@ -18,6 +18,7 @@ config SOC_IBM_FSP2
 	select OF_LIBFDT
 	select OF_BOARD_SETUP
 	select CMD_FDT
+	select UART750
 
 endchoice
 

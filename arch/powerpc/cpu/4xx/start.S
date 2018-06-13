@@ -40,14 +40,15 @@
 
 #define PPC_128MB_SACR_BIT(addr)	((addr) >> 27)
 #define PPC_128MB_SACR_VALUE(addr)	PPC_REG_VAL(PPC_128MB_SACR_BIT(addr),1)
-
+/* tlbtab should be nop in case of FSP2 because tlb already set in IPL,
+   just dummy call */
+#if defined(CONFIG_SOC_IBM_FSP2)
 .section .bootpg,"ax"
 .globl tlbtab
 
 tlbtab:
 	nop
-//	li r29,r1
-//	blr
+#endif
 
 #ifdef CONFIG_SYS_INIT_DCACHE_CS
 # if (CONFIG_SYS_INIT_DCACHE_CS == 0)
@@ -282,7 +283,11 @@ _start_440:
 	mtspr	SPRN_MCSRR0,r0
 	mtspr	SPRN_MCSRR1,r0
 	mfspr	r1,SPRN_MCSR
-	mtspr	0x33c,r1
+#if !defined(CONFIG_47x)
+	mtspr	SPRN_MCSR,r1
+#else
+	mtspr	SPRN_MCSR_C,r1
+#endif /* !CONFIG_47x */
 #endif
 
 	/*----------------------------------------------------------------*/
@@ -294,7 +299,9 @@ _start_440:
 	*/
 	lis	r1,0x0030	/* store gathering & broadcast disable */
 	ori	r1,r1,0x6000	/* cache touch */
-	ori	r1,r1,0x0040
+#if defined(CONFIG_SOC_IBM_FSP2)
+	ori	r1,r1,0x0040	/* btac disable for ppc476 */
+#endif
 	mtspr	SPRN_CCR0,r1
 
 	/*----------------------------------------------------------------*/
@@ -318,10 +325,11 @@ _start_440:
 	mtspr	SPRN_DVC2,r0
 
 	mfspr	r1,SPRN_DBSR
-	//fsp2
-	lis	r0,0x3000
+#if defined(CONFIG_SOC_IBM_FSP2)
+	lis	r0,0x3000	/* don't clear DBSR bits on FSP2 */
 	andc	r1,r1,r0
 	li	r0,0
+#endif
 
 
 	mtspr	SPRN_DBSR,r1	/* Clear all valid bits */
@@ -388,7 +396,7 @@ skip_debug_init:
 	/*----------------------------------------------------------------*/
 	/* Configure cache regions  */
 	/*----------------------------------------------------------------*/
-	/*
+#ifndef CONFIG_SOC_IBM_FSP2
 	mtspr	SPRN_INV0,r0
 	mtspr	SPRN_INV1,r0
 	mtspr	SPRN_INV2,r0
@@ -405,18 +413,16 @@ skip_debug_init:
 	mtspr	SPRN_DTV1,r0
 	mtspr	SPRN_DTV2,r0
 	mtspr	SPRN_DTV3,r0
-	*/
 	/*----------------------------------------------------------------*/
 	/* Cache victim limits */
 	/*----------------------------------------------------------------*/
 	/* floors 0, ceiling max to use the entire cache -- nothing locked
 	*/
-	/*lis	r1,0x0001
+	lis	r1,0x0001
 	ori	r1,r1,0xf800
 	mtspr	SPRN_IVLIM,r1
 	mtspr	SPRN_DVLIM,r1
-	*/
-
+#endif
 	/*----------------------------------------------------------------+
 	|Initialize MMUCR[STID] = 0.
 	+-----------------------------------------------------------------*/
@@ -426,11 +432,12 @@ skip_debug_init:
 	and	r0,r0,r1
 	mtspr	SPRN_MMUCR,r0
 
+/* The IPL has already cleared/setup the TLB for FSP2 */
 #ifndef CONFIG_SOC_IBM_FSP2
 	/*----------------------------------------------------------------*/
 	/* Clear all TLB entries -- TID = 0, TS = 0 */
 	/*----------------------------------------------------------------*/
-	//addis	r0,0,0x0000
+	addis	r0,0,0x0000
 #ifdef CONFIG_SYS_RAMBOOT
 	li	r4,0		/* Start with TLB #0 */
 #else
@@ -493,7 +500,7 @@ tlbnxt:	addi	r4,r4,1		/* Next TLB */
 	tlbwe	r2,r4,2		/* TLB Word 2 */
 tlbnx2:	addi	r4,r4,1		/* Next TLB */
 	bdnz	1b
-#endif
+#endif /* CONFIG_SOC_IBM_FSP2 */
 
 	/*----------------------------------------------------------------*/
 	/* Continue from 'normal' start */
@@ -679,14 +686,14 @@ _start:
 	isync
 #endif /* CONFIG_SYS_INIT_RAM_DCACHE */
 
+#if !defined(CONFIG_SOC_IBM_FSP2)
 	/* 440EP & 440GR are only 440er PPC's without internal SRAM */
 #if !defined(CONFIG_440EP) && !defined(CONFIG_440GR)
 	/* not all PPC's have internal SRAM usable as L2-cache */
 #if defined(CONFIG_440GX) || \
     defined(CONFIG_440SP) || defined(CONFIG_440SPE) || \
     defined(CONFIG_460SX)
-	nop
-	//mtdcr	L2_CACHE_CFG,r0		/* Ensure L2 Cache is off */
+	mtdcr	L2_CACHE_CFG,r0		/* Ensure L2 Cache is off */
 #elif defined(CONFIG_460EX) || defined(CONFIG_460GT)
 	lis	r1, 0x0000
 	ori	r1,r1,0x0008		/* Set L2_CACHE_CFG[RDBW]=1 */
@@ -1389,14 +1396,19 @@ relocate_code:
 #if defined(CONFIG_440)
 	/* Clear all potential pending exceptions */
 	mfspr	r1,SPRN_MCSR
-	mtspr	0x33c,r1
-	//fsp2
-	//addi	r1,r0,CONFIG_SYS_TLB_FOR_BOOT_FLASH	/* Use defined TLB */
-	//tlbre	r0,r1,0x0002		/* Read contents */
-	//ori	r0,r0,0x0c00		/* Or in the inhibit, write through bit */
-	//tlbwe	r0,r1,0x0002		/* Save it out */
-	//sync
-	//isync
+#if !defined(CONFIG_47x)
+	mtspr	SPRN_MCSR,r1
+#else
+	mtspr	SPRN_MCSR_C,r1
+#endif
+#if !defined(CONFIG_SOC_IBM_FSP2)
+	addi	r1,r0,CONFIG_SYS_TLB_FOR_BOOT_FLASH	/* Use defined TLB */
+	tlbre	r0,r1,0x0002		/* Read contents */
+	ori	r0,r0,0x0c00		/* Or in the inhibit, write through bit */
+	tlbwe	r0,r1,0x0002		/* Save it out */
+	sync
+	isync
+#endif /* !defined(CONFIG_SOC_IBM_FSP2) */
 #endif /* defined(CONFIG_440) */
 	mr	r1,  r3		/* Set new stack pointer		*/
 	mr	r9,  r4		/* Save copy of Init Data pointer	*/
