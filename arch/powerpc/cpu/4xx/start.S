@@ -769,6 +769,7 @@ _start:
 	mtdcr	ISRAM0_SB1CR,r0		/* Disable bank 1 */
 #endif
 #endif /* #if !defined(CONFIG_440EP) && !defined(CONFIG_440GR) */
+#endif /* #if !defined(CONFIG_FSP2) */
 
 	/*----------------------------------------------------------------*/
 	/* Setup the stack in internal SRAM */
