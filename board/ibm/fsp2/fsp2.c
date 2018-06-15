@@ -149,7 +149,6 @@ int checkboard(void)
 	unsigned long tsr = mfspr(SPRN_TSR);
 	unsigned long crcs = mfcmu(CMU_CRCS);
 	char *buf = env_get("serial#");
-	struct ffdc_data *ffdc_data = get_ffdc_data_ptr();
 
 	printf("Board: IBM Sunray2");
 	puts(", serial# ");
@@ -158,13 +157,7 @@ int checkboard(void)
 
 	printf(" Early Debug Info:\n");
 	printf("\tPVR  %08lx  DBSR  %08lx  CRCS   %08lx\n", pvr, dbsr, crcs);
-	printf("\tTSR  %08lx  BWTC  %08x  LR     %08lx\n",
-			tsr, mfcmu(CMU_BWTC), ffdc_data->lr);
-	printf("\tGPR1 %08lx  GPR2  %08lx  GPR3   %08lx\n",
-			ffdc_data->gpr1, ffdc_data->gpr2, ffdc_data->gpr3);
-	printf("\tSRR0 %08lx  CSRR0 %08lx  MCSRR0 %08lx\n",
-			ffdc_data->srr0, ffdc_data->csrr0, ffdc_data->mcsrr0);
-	printf("\tTBL  %08lx  TBU   %08lx\n", ffdc_data->tbl, ffdc_data->tbu);
+	printf("\tTSR  %08lx  BWTC  %08x   \n", tsr, mfcmu(CMU_BWTC));
 
 	return (0);
 }
@@ -221,8 +214,6 @@ int mem_init(unsigned long start, unsigned long end, int *ce)
 	WATCHDOG_RESET();
 
 	if (addr < end) {
-		/* FIXME log FFDC: error found, address, etc */
-		/* UE detected, restart from beginning */
 		addr = start, len = end - start;
 
 		do {
@@ -257,19 +248,19 @@ int mem_init(unsigned long start, unsigned long end, int *ce)
 
 int dram_init_banksize(void) {
 	gd->bd->bi_memstart = 0x0;
-	gd->bd->bi_memsize = 0x40000000;
+	gd->bd->bi_memsize = FSP2_RAM_SIZE;
 	return 0;
 }
 
 /* perform memory initialization here.  scrub/fill as required */
 int dram_init(void)
 {
-	long dram_size = 0x40000000; /* hardcode to 1G */
+	long dram_size = FSP2_RAM_SIZE;
 	unsigned long start = 64*1024; /* skip exception vectors */
 	unsigned long end = dram_size - 2*1024*1024; /* FIXME size of u-boot? */
 
 	mem_init(start, end, NULL);
-	gd->ram_size = get_ram_size((long *)CONFIG_SYS_SDRAM_BASE, 0x40000000);
+	gd->ram_size = get_ram_size((long *)CONFIG_SYS_SDRAM_BASE, FSP2_RAM_SIZE);
 	return 0;
 }
 

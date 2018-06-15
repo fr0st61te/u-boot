@@ -3,9 +3,6 @@
 
 #include <asm/ppc476fsp2.h>
 
-
-
-
 #define CONFIG_SYS_CBSIZE	2048
 #define CONFIG_AUTO_COMPLETE
 
@@ -21,12 +18,10 @@
 
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		0xfc000000
-//#define CONFIG_NR_DRAM_BANKS		1
 
 /* network */
 #define CONFIG_MII
 #define CONFIG_PHY_GIGE
-#define CONFIG_SYS_RX_ETH_BUFFER        32 /* number of eth rx buffers  */
 
 #define CONFIG_HAS_ETH1
 #define CONFIG_ETHADDR          00:01:73:01:c9:33
@@ -56,13 +51,8 @@
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 #define CONFIG_SYS_MEM_TOP_HIDE 0x30000000
 
-//#define CONFIG_SPD_EEPROM          /* Use SPD EEPROM for setup     */
-//#define SPD_EEPROM_ADDRESS1  0x52  /* SPD i2c spd addresses        */
-//#define SPD_EEPROM_ADDRESS2  0x53  /* SPD i2c spd addresses        */
-//#define SPD_EEPROM_ADDRESS 0x53
-//#define CONFIG_CMD_FDT
-//#define CONFIG_OF_LIBFDT
-//#define CONFIG_OF_BOARD_SETUP
+#define FSP2_RAM_SIZE		0x40000000
+
 #define CONFIG_SYS_BOOTMAPSZ (64 << 20)
 #define CONFIG_SYS_BOOTM_LEN (64 << 20)
 

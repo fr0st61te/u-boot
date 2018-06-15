@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-obj-y += fsp2.o flash.o ffs.o ffdc_data.o cmd_scrub.o
+obj-y += fsp2.o
 obj-$(CONFIG_CMD_RSTINFO) += rstinfo.o
 obj-$(CONFIG_OF_BOARD_SETUP) += fdt.o
 obj-y	+= init.o

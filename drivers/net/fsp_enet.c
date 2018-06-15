@@ -40,7 +40,6 @@
 #include <asm/processor.h>
 #include <asm/cache.h>
 #include <asm/io.h>
-//#include <asm/errno.h>
 #include <fsp_enet.h>
 #include <asm/ppc4xx-mal.h>
 
@@ -105,7 +104,7 @@ static void enet_wback_inv(void *addr, int size)
 
 #define EMAC0_OFFSET	0x00000000
 #define EMAC1_OFFSET	0x00000100
-//uchar *net_rx_packets[CONFIG_SYS_RX_ETH_BUFFER];
+
 unsigned long get_dcr(unsigned short);
 unsigned long set_dcr(unsigned short, unsigned long);
 

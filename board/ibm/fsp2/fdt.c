@@ -26,10 +26,7 @@ static unsigned long get_tbfreq(unsigned long cpufreq)
 
 int ft_board_setup(void* blob, bd_t *bd)
 {
-	int rc = 0;
-	printf("start %llx size %llx, s: %llx s: %llx\n", (u64)bd->bi_memstart, (u64)bd->bi_memsize, (u64)env_get_bootm_low(),(u64) env_get_bootm_size() );
-	rc = fdt_fixup_memory(blob, (u64)env_get_bootm_low(), (u64) 0x40000000);
-	printf("rc :%i\n", rc);
+	fdt_fixup_memory(blob, (u64)env_get_bootm_low(), (u64)FSP2_RAM_SIZE);
 	fdt_fixup_ethernet(blob);
 	do_fixup_by_prop_u32(blob, "device_type", "cpu", 4, "clock-frequency",
 			     bd->bi_intfreq, 1);

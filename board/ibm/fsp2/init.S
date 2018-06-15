@@ -37,6 +37,8 @@
  *************************************************************************/
 
 /* Note that all of the TLB entries necessary have already been setup by
- * the IPL. */
+ * the IPL.
+ * TODO : move tlb setup from ipl here.
+ */
 
 
