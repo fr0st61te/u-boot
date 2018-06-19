@@ -1,8 +1,8 @@
 menu "ppc4xx CPU"
-	depends on 4xx
+	depends on 47x
 
 config SYS_CPU
-	default "4xx"
+	default "47x"
 
 choice
 	prompt "Target select"
@@ -11,7 +11,7 @@ choice
 config SOC_IBM_FSP2
 	bool "support fsp2"
 	select 440
-	select 47x
+	select 4xx
 	select PANIC_HANG
 	select IBM_EMAC4
 	select BOARD_EARLY_INIT_F
@@ -25,7 +25,7 @@ endchoice
 config 440
 	bool
 
-config 47x
+config 4xx
 	bool
 
 config SYS_PERIPHERAL_BASE

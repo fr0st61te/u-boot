@@ -19,7 +19,7 @@ SECTIONS
 #ifdef CONFIG_440
 	.bootpg 0xfffff000 :
 	{
-		arch/powerpc/cpu/4xx/start.o	(.bootpg)
+		arch/powerpc/cpu/47x/start.o	(.bootpg)
 
 		/*
 		 * PPC440 board need a board specific object with the
@@ -39,7 +39,7 @@ SECTIONS
 	.text :
 	{
 		__start = .;
-		arch/powerpc/cpu/4xx/start.o	(.text)
+		arch/powerpc/cpu/47x/start.o	(.text)
 		CONFIG_BOARDDIR/init.o	(.text)
 		*(.text*)
 	} > flash

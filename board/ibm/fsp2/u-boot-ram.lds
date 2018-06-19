@@ -28,7 +28,7 @@ SECTIONS
   . = + SIZEOF_HEADERS;
   .text      :
   {
-    arch/powerpc/cpu/4xx/start.o	(.text*)
+    arch/powerpc/cpu/47x/start.o	(.text*)
     board/ibm/fsp2/init.o		(.text*)
 
     *(.text*)
