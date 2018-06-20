@@ -22,7 +22,7 @@ struct arch_global_data {
 #if defined(CONFIG_8xx)
 	unsigned long brg_clk;
 #endif
-#if defined(CONFIG_4xx)
+#if defined(CONFIG_47x)
 	u32 uart_clk;
 #endif
 #if defined(CONFIG_CPM2)

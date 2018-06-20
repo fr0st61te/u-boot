@@ -11,8 +11,7 @@ extra-y	+= resetvec.o
 obj-y	+= cache.o
 obj-y	+= dcr.o
 
-#obj-y	+= 40x_spd_sdram.o
-#obj-y	+= 44x_spd_ddr.o
+obj-y	+= 44x_spd_ddr.o
 obj-y	+= 4xx_uart.o
 obj-y	+= cpu.o
 obj-y	+= cpu_init.o

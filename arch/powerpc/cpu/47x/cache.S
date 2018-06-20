@@ -183,8 +183,6 @@ _GLOBAL(invalidate_dcache)
  * Icache-related functions are used in POST framework.
  *
  */
-#ifdef CONFIG_440
-
        .globl  dcache_disable
        .globl  dcache_enable
        .globl  icache_disable
@@ -202,54 +200,3 @@ icache_status:
 	mr	r3,  0
 	blr
 
-#else /* CONFIG_440 */
-
-	.globl	icache_enable
-icache_enable:
-	mflr	r8
-	bl	invalidate_icache
-	mtlr	r8
-	isync
-	addis	r3,r0, 0xc000	      /* set bit 0 */
-	mticcr	r3
-	blr
-
-	.globl	icache_disable
-icache_disable:
-	addis	r3,r0, 0x0000	      /* clear bit 0 */
-	mticcr	r3
-	isync
-	blr
-
-	.globl	icache_status
-icache_status:
-	mficcr	r3
-	srwi	r3, r3, 31	/* >>31 => select bit 0 */
-	blr
-
-	.globl	dcache_enable
-dcache_enable:
-	mflr	r8
-	bl	invalidate_dcache
-	mtlr	r8
-	isync
-	addis	r3,r0, 0x8000	      /* set bit 0 */
-	mtdccr	r3
-	blr
-
-	.globl	dcache_disable
-dcache_disable:
-	mflr	r8
-	bl	flush_dcache
-	mtlr	r8
-	addis	r3,r0, 0x0000	      /* clear bit 0 */
-	mtdccr	r3
-	blr
-
-	.globl	dcache_status
-dcache_status:
-	mfdccr	r3
-	srwi	r3, r3, 31	/* >>31 => select bit 0 */
-	blr
-
-#endif /* CONFIG_440 */

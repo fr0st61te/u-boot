@@ -745,7 +745,7 @@
 #define MAS7	SPRN_MAS7
 #define MAS8 	SPRN_MAS8
 
-#if defined(CONFIG_4xx) || defined(CONFIG_44x) || defined(CONFIG_MPC85xx)
+#if defined(CONFIG_47x) || defined(CONFIG_MPC85xx)
 #define DAR_DEAR DEAR
 #else
 #define DAR_DEAR DAR

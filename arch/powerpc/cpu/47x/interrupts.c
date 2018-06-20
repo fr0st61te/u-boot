@@ -35,26 +35,11 @@ struct	irq_action {
 };
 static struct irq_action irq_vecs[IRQ_MAX];
 
-#if defined(CONFIG_440)
-
 /* SPRN changed in 440 */
 static __inline__ void set_evpr(unsigned long val)
 {
 	asm volatile("mtspr 0x03f,%0" : : "r" (val));
 }
-
-#else /* !defined(CONFIG_440) */
-
-static __inline__ void set_pit(unsigned long val)
-{
-	asm volatile("mtpit %0" : : "r" (val));
-}
-
-static __inline__ void set_evpr(unsigned long val)
-{
-	asm volatile("mtevpr %0" : : "r" (val));
-}
-#endif /* defined(CONFIG_440 */
 
 void interrupt_init_cpu(unsigned *decrementer_count)
 {
@@ -73,11 +58,9 @@ void interrupt_init_cpu(unsigned *decrementer_count)
 		irq_vecs[vec].count = 0;
 	}
 
-#ifdef CONFIG_4xx
 	/*
 	 * Init PIT
 	 */
-#if defined(CONFIG_440)
 	val = mfspr( SPRN_TCR );
 	val &= (~0x04400000);		/* clear DIS & ARE */
 	mtspr( SPRN_TCR, val );
@@ -91,10 +74,6 @@ void interrupt_init_cpu(unsigned *decrementer_count)
 #endif
 	mtspr( SPRN_DECAR, val );		/* Set auto-reload value */
 	mtspr( SPRN_DEC, val );		/* Set inital val */
-#else
-	set_pit(gd->bd->bi_intfreq / 1000);
-#endif
-#endif  /* CONFIG_4xx */
 
 #ifdef CONFIG_ADCIOP
 	/*

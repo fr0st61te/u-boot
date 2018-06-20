@@ -25,7 +25,7 @@
 #include <mpc83xx.h>
 #include <asm/immap_83xx.h>
 #endif
-#ifdef	CONFIG_4xx
+#ifdef	CONFIG_47x
 #include <asm/ppc4xx.h>
 #endif
 #ifdef CONFIG_SOC_DA8XX
@@ -47,7 +47,7 @@ uint rd_dc_cst(void);
 void wr_dc_cst(uint);
 void wr_dc_adr(uint);
 
-#if defined(CONFIG_4xx)	|| \
+#if defined(CONFIG_47x)	|| \
 	defined(CONFIG_MPC85xx)	|| \
 	defined(CONFIG_MPC86xx)	|| \
 	defined(CONFIG_MPC83xx)

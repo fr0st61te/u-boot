@@ -544,7 +544,7 @@ config MPC8XX_CONS
 
 config UART750
 	bool "UART750 serial driver for 4xx ppc"
-	depends on 4xx
+	depends on 47x
 	help
 	  Serial driver for PPC 4xx based platforms.
 

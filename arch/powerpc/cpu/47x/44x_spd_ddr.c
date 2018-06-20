@@ -39,10 +39,7 @@
 
 #include "ecc.h"
 
-#if defined(CONFIG_SPD_EEPROM) &&					\
-	(defined(CONFIG_440GP) || defined(CONFIG_440GX) ||		\
-	 defined(CONFIG_440EP) || defined(CONFIG_440GR))
-
+#if defined(CONFIG_SPD_EEPROM)
 /*
  * Set default values
  */
@@ -166,21 +163,13 @@ long int spd_sdram(void) {
 	 */
 	check_volt_type(dimm_populated, iic0_dimm_addr, num_dimm_banks);
 
-#if defined(CONFIG_440GX) || defined(CONFIG_440EP) || defined(CONFIG_440GR)
 	/*
-	 * Soft-reset SDRAM controller.
-	 */
-	mtsdr(SDR0_SRST, SDR0_SRST_DMC);
-	mtsdr(SDR0_SRST, 0x00000000);
-#endif
-
-	/*
-	 * program 440GP SDRAM controller options (SDRAM0_CFG0)
+	 * program 440 SDRAM controller options (SDRAM0_CFG0)
 	 */
 	program_cfg0(dimm_populated, iic0_dimm_addr, num_dimm_banks);
 
 	/*
-	 * program 440GP SDRAM controller options (SDRAM0_CFG1)
+	 * program 440 SDRAM controller options (SDRAM0_CFG1)
 	 */
 	program_cfg1(dimm_populated, iic0_dimm_addr, num_dimm_banks);
 

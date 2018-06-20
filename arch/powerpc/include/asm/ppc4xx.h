@@ -5,57 +5,6 @@
 #ifndef	__PPC4XX_H__
 #define __PPC4XX_H__
 
-/*
- * Include SoC specific headers
- */
-#if defined(CONFIG_405EP)
-#include <asm/ppc405ep.h>
-#endif
-
-#if defined(CONFIG_405EX)
-#include <asm/ppc405ex.h>
-#endif
-
-#if defined(CONFIG_405EZ)
-#include <asm/ppc405ez.h>
-#endif
-
-#if defined(CONFIG_405GP)
-#include <asm/ppc405gp.h>
-#endif
-
-#if defined(CONFIG_440EP) || defined(CONFIG_440GR)
-#include <asm/ppc440ep_gr.h>
-#endif
-
-#if defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
-#include <asm/ppc440epx_grx.h>
-#endif
-
-#if defined(CONFIG_440GP)
-#include <asm/ppc440gp.h>
-#endif
-
-#if defined(CONFIG_440GX)
-#include <asm/ppc440gx.h>
-#endif
-
-#if defined(CONFIG_440SP)
-#include <asm/ppc440sp.h>
-#endif
-
-#if defined(CONFIG_440SPE)
-#include <asm/ppc440spe.h>
-#endif
-
-#if defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#include <asm/ppc460ex_gt.h>
-#endif
-
-#if defined(CONFIG_460SX)
-#include <asm/ppc460sx.h>
-#endif
-
 #if defined(CONFIG_47x)
 #include <asm/ppc476fsp2.h>
 #endif
@@ -175,17 +124,10 @@
 #define GPT0_DCT0		0x00000110
 #define GPT0_DCIS		0x0000011C
 
-#if defined(CONFIG_440)
 #include <asm/ppc440.h>
-#else
-#include <asm/ppc405.h>
-#endif
-
 #include <asm/ppc4xx-sdram.h>
 #include <asm/ppc4xx-ebc.h>
-#if !defined(CONFIG_XILINX_440)
 #include <asm/ppc4xx-uic.h>
-#endif
 
 /*
  * Macro for generating register field mnemonics
