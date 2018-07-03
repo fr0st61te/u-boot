@@ -16,77 +16,20 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_405GP) || \
-    defined(CONFIG_405EP) || defined(CONFIG_405EZ) || \
-    defined(CONFIG_405EX) || defined(CONFIG_440)
 
-#if defined(CONFIG_440)
-
-#if defined(CONFIG_440GP)
-#define CR0_MASK        0x3fff0000
-#define CR0_EXTCLK_ENA  0x00600000
-#define CR0_UDIV_POS    16
-#define UDIV_SUBTRACT	1
-#define UART0_SDR	CPC0_CR0
-#define MFREG(a, d)	d = mfdcr(a)
-#define MTREG(a, d)	mtdcr(a, d)
-#else /* #if defined(CONFIG_440GP) */
-/* all other 440 PPC's access clock divider via sdr register */
-#define CR0_MASK        0xdfffffff
-#define CR0_EXTCLK_ENA  0x00800000
-#define CR0_UDIV_POS    0
-#define UDIV_SUBTRACT	0
-#define UART0_SDR	SDR0_UART0
-#define UART1_SDR	SDR0_UART1
-#if defined(CONFIG_440EP) || defined(CONFIG_440EPX) || \
-    defined(CONFIG_440GR) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_440SP) || defined(CONFIG_440SPE) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define UART2_SDR	SDR0_UART2
-#endif
-#if defined(CONFIG_440EP) || defined(CONFIG_440EPX) || \
-    defined(CONFIG_440GR) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define UART3_SDR	SDR0_UART3
-#endif
-#define MFREG(a, d)	mfsdr(a, d)
-#define MTREG(a, d)	mtsdr(a, d)
-#endif /* #if defined(CONFIG_440GP) */
-#elif defined(CONFIG_405EP) || defined(CONFIG_405EZ)
-#define UCR0_MASK       0x0000007f
-#define UCR1_MASK       0x00007f00
-#define UCR0_UDIV_POS   0
-#define UCR1_UDIV_POS   8
-#define UDIV_MAX        127
-#elif defined(CONFIG_405EX)
-#define MFREG(a, d)	mfsdr(a, d)
-#define MTREG(a, d)	mtsdr(a, d)
-#define CR0_MASK	0x000000ff
-#define CR0_EXTCLK_ENA	0x00800000
-#define CR0_UDIV_POS	0
-#define UDIV_SUBTRACT	0
-#define UART0_SDR	SDR0_UART0
-#define UART1_SDR	SDR0_UART1
-#elif defined(CONFIG_SOC_IBM_FSP2)
-#else /* CONFIG_405GP */
 #define CR0_MASK        0x00001fff
 #define CR0_EXTCLK_ENA  0x000000c0
 #define CR0_UDIV_POS    1
 #define UDIV_MAX        32
-#endif
 
-#if defined(CONFIG_405EP) && defined(CONFIG_SYS_EXT_SERIAL_CLOCK)
-#error "External serial clock not supported on AMCC PPC405EP!"
-#endif
 
-#if (defined(CONFIG_405EX) || defined(CONFIG_405EZ) ||	\
-     defined(CONFIG_440)) && !defined(CONFIG_SYS_EXT_SERIAL_CLOCK)
 /*
  * For some SoC's, the cpu clock is on divider chain A, UART on
  * divider chain B ... so cpu clock is irrelevant. Get the
  * "optimized" values that are subject to the 1/2 opb clock
  * constraint.
  */
+#if !defined(CONFIG_SYS_EXT_SERIAL_CLOCK)
 static u16 serial_bdiv(int baudrate, u32 *udiv)
 {
 	sys_info_t sysinfo;
@@ -98,29 +41,11 @@ static u16 serial_bdiv(int baudrate, u32 *udiv)
 	u32 i;
 	u32 est;		/* current estimate */
 	u32 max;
-#if defined(CONFIG_405EZ)
-	u32 cpr_pllc;
-	u32 plloutb;
-	u32 reg;
-#endif
-
 	get_sys_info(&sysinfo);
 
-#if defined(CONFIG_405EZ)
-	/* check the pll feedback source */
-	mfcpr(CPR0_PLLC, cpr_pllc);
-	plloutb = ((CONFIG_SYS_CLK_FREQ * ((cpr_pllc & PLLC_SRC_MASK) ?
-					   sysinfo.pllFwdDivB : sysinfo.pllFwdDiv) *
-		    sysinfo.pllFbkDiv) / sysinfo.pllFwdDivB);
-	div = plloutb / (16 * baudrate); /* total divisor */
-	umin = (plloutb / get_OPB_freq()) << 1;	/* 2 x OPB divisor */
-	max = 256;			/* highest possible */
-#else /* 405EZ */
 	div = sysinfo.freqPLB / (16 * baudrate); /* total divisor */
 	umin = sysinfo.pllOpbDiv << 1;	/* 2 x OPB divisor */
 	max = 32;			/* highest possible */
-#endif /* 405EZ */
-
 	*udiv = diff = max;
 
 	/*
@@ -141,16 +66,9 @@ static u16 serial_bdiv(int baudrate, u32 *udiv)
 		}
 	}
 
-#if defined(CONFIG_405EZ)
-	mfcpr(CPR0_PERD0, reg);
-	reg &= ~0x0000ffff;
-	reg |= ((*udiv - 0) << 8) | (*udiv - 0);
-	mtcpr(CPR0_PERD0, reg);
-#endif
-
 	return div / *udiv;
 }
-#endif /* #if (defined(CONFIG_405EP) ... */
+#endif
 
 /*
  * This function returns the UART clock used by the common
@@ -160,12 +78,8 @@ static u16 serial_bdiv(int baudrate, u32 *udiv)
 int get_serial_clock(void)
 {
 	u32 clk;
-#if !defined(CONFIG_SOC_IBM_FSP2)
 	u32 udiv;
-#if !defined(CONFIG_405EZ)
-	u32 reg;
-#endif
-#endif
+	u32 reg = 0 ;
 #if !defined(CONFIG_SYS_EXT_SERIAL_CLOCK)
 	PPC4xx_SYS_INFO sys_info;
 #endif
@@ -175,17 +89,12 @@ int get_serial_clock(void)
 	 * Let's handle this in some #ifdef's for the SoC's.
 	 */
 
-#if defined(CONFIG_405GP)
-	reg = mfdcr(CPC0_CR0) & ~CR0_MASK;
 #ifdef CONFIG_SYS_EXT_SERIAL_CLOCK
 	clk = CONFIG_SYS_EXT_SERIAL_CLOCK;
 	udiv = 1;
 	reg |= CR0_EXTCLK_ENA;
 #else /* CONFIG_SYS_EXT_SERIAL_CLOCK */
 	clk = gd->cpu_clk;
-#ifdef CONFIG_SYS_405_UART_ERRATA_59
-	udiv = 31;			/* Errata 59: stuck at 31 */
-#else /* CONFIG_SYS_405_UART_ERRATA_59 */
 	{
 		u32 tmp = CONFIG_SYS_BASE_BAUD * 16;
 
@@ -193,7 +102,6 @@ int get_serial_clock(void)
 	}
 	if (udiv > UDIV_MAX)                    /* max. n bits for udiv */
 		udiv = UDIV_MAX;
-#endif /* CONFIG_SYS_405_UART_ERRATA_59 */
 #endif /* CONFIG_SYS_EXT_SERIAL_CLOCK */
 	reg |= (udiv - 1) << CR0_UDIV_POS;	/* set the UART divisor */
 	mtdcr (CPC0_CR0, reg);
@@ -202,29 +110,11 @@ int get_serial_clock(void)
 #else
 	clk = CONFIG_SYS_BASE_BAUD * 16;
 #endif
-#endif
-
-#if defined(CONFIG_405EP)
-	{
-		u32 tmp = CONFIG_SYS_BASE_BAUD * 16;
-
-		reg = mfdcr(CPC0_UCR) & ~(UCR0_MASK | UCR1_MASK);
-		clk = gd->cpu_clk;
-		udiv = (clk + tmp / 2) / tmp;
-		if (udiv > UDIV_MAX)                    /* max. n bits for udiv */
-			udiv = UDIV_MAX;
-	}
-	reg |= udiv << UCR0_UDIV_POS;	        /* set the UART divisor */
-	reg |= udiv << UCR1_UDIV_POS;	        /* set the UART divisor */
-	mtdcr(CPC0_UCR, reg);
-	clk = CONFIG_SYS_BASE_BAUD * 16;
-#endif /* CONFIG_405EP */
-
 
 #if defined(CONFIG_SOC_IBM_FSP2)
 	/* Skip all this as uart input clock is hardcoded to OPB/4 */
 	clk = CONFIG_SYS_EXT_SERIAL_CLOCK;
-#elif defined(CONFIG_405EX) || defined(CONFIG_440)
+#else
 	MFREG(UART0_SDR, reg);
 	reg &= ~CR0_MASK;
 
@@ -252,11 +142,7 @@ int get_serial_clock(void)
 #if defined(UART3_SDR)
 	MTREG(UART3_SDR, reg);
 #endif
-#endif /* CONFIG_405EX ... */
-
-#if defined(CONFIG_405EZ)
-	clk = gd->baudrate * serial_bdiv(gd->baudrate, &udiv) * 16;
-#endif /* CONFIG_405EZ */
+#endif /* CONFIG_SOC_IBM_FSP2 */
 
 	/*
 	 * Correct UART frequency in bd-info struct now that
@@ -271,4 +157,3 @@ int get_serial_clock(void)
 
 	return clk;
 }
-#endif	/* CONFIG_405GP */

@@ -6,9 +6,4 @@
 #
 
 PLATFORM_CPPFLAGS += -mstring -msoft-float
-
-ifneq (,$(CONFIG_440))
-PLATFORM_CPPFLAGS += -Wa,-m440 -mcpu=440
-else
-PLATFORM_CPPFLAGS += -Wa,-m405 -mcpu=405
-endif
+PLATFORM_CPPFLAGS += -Wa,-m476 -mcpu=476

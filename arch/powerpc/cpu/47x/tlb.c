@@ -23,8 +23,6 @@
 
 #include <common.h>
 
-#if defined(CONFIG_440)
-
 #include <asm/ppc440.h>
 #include <asm/cache.h>
 #include <asm/io.h>
@@ -54,15 +52,9 @@ void remove_tlb(u32 vaddr, u32 size)
 			 * to check the size/end address for a match.
 			 */
 			switch (tlb_word0_value & TLB_WORD0_SIZE_MASK) {
-#if !defined(CONFIG_47x)
-			case TLB_WORD0_SIZE_1KB:
-				tlb_size = 1 << 10;
-				break;
-#else
 			case TLB_WORD0_SIZE_1G:
 				tlb_size = 1 << 30;
 				break;
-#endif
 			case TLB_WORD0_SIZE_4KB:
 				tlb_size = 4 << 10;
 				break;
@@ -72,11 +64,6 @@ void remove_tlb(u32 vaddr, u32 size)
 			case TLB_WORD0_SIZE_64KB:
 				tlb_size = 64 << 10;
 				break;
-#if !defined(CONFIG_47x)
-			case TLB_WORD0_SIZE_256KB:
-				tlb_size = 256 << 10;
-				break;
-#endif
 			case TLB_WORD0_SIZE_1MB:
 				tlb_size = 1 << 20;
 				break;
@@ -128,15 +115,9 @@ void change_tlb(u32 vaddr, u32 size, u32 tlb_word2_i_value)
 			 * to check the size/end address for a match.
 			 */
 			switch (tlb_word0_value & TLB_WORD0_SIZE_MASK) {
-#if !defined(CONFIG_47x)
-			case TLB_WORD0_SIZE_1KB:
-				tlb_size = 1 << 10;
-				break;
-#else
 			case TLB_WORD0_SIZE_1G:
 				tlb_size = 1 << 30;
 				break;
-#endif
 			case TLB_WORD0_SIZE_4KB:
 				tlb_size = 4 << 10;
 				break;
@@ -146,11 +127,6 @@ void change_tlb(u32 vaddr, u32 size, u32 tlb_word2_i_value)
 			case TLB_WORD0_SIZE_64KB:
 				tlb_size = 64 << 10;
 				break;
-#if !defined(CONFIG_47x)
-			case TLB_WORD0_SIZE_256KB:
-				tlb_size = 256 << 10;
-				break;
-#endif
 			case TLB_WORD0_SIZE_1MB:
 				tlb_size = 1 << 20;
 				break;
@@ -259,7 +235,6 @@ static void program_tlb_addr(u64 phys_addr,
 	while (mem_size != 0) {
 		rc = 0;
 		/* Add the TLB entries in to map the region. */
-#if defined(CONFIG_47x)
 		if (((phys_addr & TLB_1G_ALIGN_MASK) == phys_addr) &&
 			   (mem_size >= TLB_1G_SIZE)) {
 			/* Add a 1G TLB entry */
@@ -270,7 +245,6 @@ static void program_tlb_addr(u64 phys_addr,
 				virt_addr += TLB_1G_SIZE;
 			}
 		} else
-#endif
 		if (((phys_addr & TLB_256MB_ALIGN_MASK) == phys_addr) &&
 		    (mem_size >= TLB_256MB_SIZE)) {
 			/* Add a 256MB TLB entry */
@@ -298,17 +272,6 @@ static void program_tlb_addr(u64 phys_addr,
 				phys_addr += TLB_1MB_SIZE;
 				virt_addr += TLB_1MB_SIZE;
 			}
-#if !defined(CONFIG_47x)
-		} else if (((phys_addr & TLB_256KB_ALIGN_MASK) == phys_addr) &&
-			   (mem_size >= TLB_256KB_SIZE)) {
-			/* Add a 256KB TLB entry */
-			if ((rc = add_tlb_entry(phys_addr, virt_addr,
-						TLB_WORD0_SIZE_256KB, tlb_i)) == 0) {
-				mem_size -= TLB_256KB_SIZE;
-				phys_addr += TLB_256KB_SIZE;
-				virt_addr += TLB_256KB_SIZE;
-			}
-#endif
 		} else if (((phys_addr & TLB_64KB_ALIGN_MASK) == phys_addr) &&
 			   (mem_size >= TLB_64KB_SIZE)) {
 			/* Add a 64KB TLB entry */
@@ -336,17 +299,6 @@ static void program_tlb_addr(u64 phys_addr,
 				phys_addr += TLB_4KB_SIZE;
 				virt_addr += TLB_4KB_SIZE;
 			}
-#if !defined(CONFIG_47x)
-		} else if (((phys_addr & TLB_1KB_ALIGN_MASK) == phys_addr) &&
-			   (mem_size >= TLB_1KB_SIZE)) {
-			/* Add a 1KB TLB entry */
-			if ((rc = add_tlb_entry(phys_addr, virt_addr,
-						TLB_WORD0_SIZE_1KB, tlb_i)) == 0) {
-				mem_size -= TLB_1KB_SIZE;
-				phys_addr += TLB_1KB_SIZE;
-				virt_addr += TLB_1KB_SIZE;
-			}
-#endif
 		} else {
 			printf("ERROR: no TLB size exists for the base address 0x%llx.\n",
 				phys_addr);
@@ -381,4 +333,3 @@ void program_tlb(u64 phys_addr, u32 virt_addr, u32 size, u32 tlb_word2_i_value)
 	return;
 }
 
-#endif /* CONFIG_440 */

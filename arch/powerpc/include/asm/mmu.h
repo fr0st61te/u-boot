@@ -558,13 +558,11 @@ extern int num_tlb_entries;
 #define LAWAR_SIZE_32G		(LAWAR_SIZE_BASE+24)
 #endif
 
-#ifdef CONFIG_440
 /* General */
 #define TLB_VALID   TLB_WORD0_V_MASK
 
 /* Supported page sizes */
 
-#if defined(CONFIG_47x)
 #define SZ_4K	0x00000000
 #define SZ_16K	0x00000010
 #define SZ_64K	0x00000030
@@ -572,16 +570,6 @@ extern int num_tlb_entries;
 #define SZ_16M	0x000000f0
 #define SZ_256M	0x000001f0
 #define SZ_1G	0x000003f0
-#else
-#define SZ_1K	0x00000000
-#define SZ_4K	0x00000010
-#define SZ_16K	0x00000020
-#define SZ_64K	0x00000030
-#define SZ_256K	0x00000040
-#define SZ_1M	0x00000050
-#define SZ_16M	0x00000070
-#define SZ_256M	0x00000090
-#endif
 
 /* Storage attributes */
 #define SA_W	0x00000800	/* Write-through */
@@ -642,15 +630,10 @@ extern int num_tlb_entries;
 #define TLB_4KB_SIZE         0x00001000
 #define TLB_1KB_SIZE         0x00000400
 
-#if defined(CONFIG_47x)
 #define TLB_WORD0_EPN_MASK   0xFFFFF000
-#else
-#define TLB_WORD0_EPN_MASK   0xFFFFFC00
-#endif
 #define TLB_WORD0_EPN_ENCODE(n) (((unsigned long)(n))&TLB_WORD0_EPN_MASK)
 #define TLB_WORD0_EPN_DECODE(n) (((unsigned long)(n))&TLB_WORD0_EPN_MASK)
 
-#if defined(CONFIG_47x)
 #define TLB_WORD0_V_MASK     0x00000800
 #define TLB_WORD0_V_ENABLE   0x00000800
 #define TLB_WORD0_V_DISABLE  0x00000000
@@ -666,34 +649,8 @@ extern int num_tlb_entries;
 #define TLB_WORD0_SIZE_16MB  0x000000F0
 #define TLB_WORD0_SIZE_256MB 0x000001F0
 #define TLB_WORD0_SIZE_1G    0x000003F0
-#else
-#define TLB_WORD0_V_MASK     0x00000200
-#define TLB_WORD0_V_ENABLE   0x00000200
-#define TLB_WORD0_V_DISABLE  0x00000000
-#define TLB_WORD0_TS_MASK    0x00000100
-#define TLB_WORD0_TS_1       0x00000100
-#define TLB_WORD0_TS_0       0x00000000
-#define TLB_WORD0_SIZE_MASK  0x000000F0
-#define TLB_WORD0_SIZE_1KB   0x00000000
-#define TLB_WORD0_SIZE_4KB   0x00000010
-#define TLB_WORD0_SIZE_16KB  0x00000020
-#define TLB_WORD0_SIZE_64KB  0x00000030
-#define TLB_WORD0_SIZE_256KB 0x00000040
-#define TLB_WORD0_SIZE_1MB   0x00000050
-#define TLB_WORD0_SIZE_16MB  0x00000070
-#define TLB_WORD0_SIZE_256MB 0x00000090
-#define TLB_WORD0_TPAR_MASK  0x0000000F
-#define TLB_WORD0_TPAR_ENCODE(n) ((((unsigned long)(n))&0x0F)<<0)
-#define TLB_WORD0_TPAR_DECODE(n) ((((unsigned long)(n))>>0)&0x0F)
-#endif
-
-#if defined(CONFIG_47x)
 #define TLB_WORD1_RPN_MASK   0xFFFFF000
 #define TLB_WORD1_ERPN_MASK  0x000003FF
-#else
-#define TLB_WORD1_RPN_MASK   0xFFFFFC00
-#define TLB_WORD1_ERPN_MASK  0x0000000F
-#endif
 
 #define TLB_WORD1_RPN_ENCODE(n) (((unsigned long)(n))&TLB_WORD1_RPN_MASK)
 #define TLB_WORD1_RPN_DECODE(n) (((unsigned long)(n))&TLB_WORD1_RPN_MASK)
@@ -708,22 +665,12 @@ extern int num_tlb_entries;
 #define TLB_WORD1_PAR1_2     0x00000200
 #define TLB_WORD1_PAR1_3     0x00000300
 
-#if defined(CONFIG_47x)
 #define TLB_WORD2_IL1I_MASK    0x00020000
 #define TLB_WORD2_IL1I_ENABLE  0x00020000
 #define TLB_WORD2_IL1I_DISABLE 0x00000000
 #define TLB_WORD2_IL1D_MASK    0x00010000
 #define TLB_WORD2_IL1D_ENABLE  0x00010000
 #define TLB_WORD2_IL1D_DISABLE 0x00000000
-#else
-#define TLB_WORD2_PAR2_MASK  0xC0000000
-#define TLB_WORD2_PAR2_ENCODE(n) ((((unsigned long)(n))&0x03)<<30)
-#define TLB_WORD2_PAR2_DECODE(n) ((((unsigned long)(n))>>30)&0x03)
-#define TLB_WORD2_PAR2_0     0x00000000
-#define TLB_WORD2_PAR2_1     0x40000000
-#define TLB_WORD2_PAR2_2     0x80000000
-#define TLB_WORD2_PAR2_3     0xC0000000
-#endif
 
 #define TLB_WORD2_U0_MASK    0x00008000
 #define TLB_WORD2_U0_ENABLE  0x00008000
@@ -817,6 +764,4 @@ void program_tlb(u64 phys_addr, u32 virt_addr, u32 size, u32 tlb_word2_i_value);
 void remove_tlb(u32 vaddr, u32 size);
 void change_tlb(u32 vaddr, u32 size, u32 tlb_word2_i_value);
 #endif /* __ASSEMBLY__ */
-
-#endif /* CONFIG_440 */
 #endif /* _PPC_MMU_H_ */

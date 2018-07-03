@@ -9,7 +9,6 @@
 #include <watchdog.h>
 #include <asm/ppc4xx-emac.h>
 #include <asm/processor.h>
-#include <asm/ppc4xx-gpio.h>
 #include <asm/ppc4xx.h>
 
 DECLARE_GLOBAL_DATA_PTR;

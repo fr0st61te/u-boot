@@ -16,7 +16,6 @@ OUTPUT_ARCH(powerpc)
 ENTRY(_start)
 SECTIONS
 {
-#ifdef CONFIG_440
 	.bootpg 0xfffff000 :
 	{
 		arch/powerpc/cpu/47x/start.o	(.bootpg)
@@ -29,7 +28,6 @@ SECTIONS
 		 */
 		CONFIG_BOARDDIR/init.o	(.bootpg)
 	} > flash
-#endif
 
 	.resetvec 0xFFFFFFFC :
 	{

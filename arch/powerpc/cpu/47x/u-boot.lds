@@ -84,7 +84,6 @@ SECTIONS
   _end = .;
 
 #ifndef CONFIG_SPL
-#ifdef CONFIG_440
   .bootpg RESET_VECTOR_ADDRESS - 0xffc :
   {
     arch/powerpc/cpu/47x/start.o	(.bootpg)
@@ -101,7 +100,6 @@ SECTIONS
     CONFIG_BOARDDIR/init.o	(.bootpg)
 #endif
   } :text = 0xffff
-#endif
 
   .resetvec RESET_VECTOR_ADDRESS :
   {

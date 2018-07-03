@@ -9,57 +9,9 @@
 #define _PPC4xx_EBC_H_
 
 /*
- * Currently there are two register layout versions for the IBM EBC core
- * used on 4xx PPC's. The following grouping lists the first layout.
- * Within this group there is a slight variation concerning the bit field
- * position of the EMPL and EMPH fields:
- */
-#if defined(CONFIG_405GP) || \
-    defined(CONFIG_405EP) || \
-    defined(CONFIG_440EP) || defined(CONFIG_440GR) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
-#define CONFIG_EBC_PPC4xx_IBM_VER1
-#if defined(CONFIG_405GP) || \
-    defined(CONFIG_405EP)
-#define EBC_CFG_EMPH_POS	8
-#define EBC_CFG_EMPL_POS	6
-#else
-#define EBC_CFG_EMPH_POS	6
-#define EBC_CFG_EMPL_POS	8
-#endif
-#endif
-
-/*
  * Define the max number of EBC banks (chip selects)
  */
-#if defined(CONFIG_405GP) || \
-    defined(CONFIG_405EZ) || \
-    defined(CONFIG_440GP) || defined(CONFIG_440GX)
-#define EBC_NUM_BANKS	8
-#endif
-
-#if defined(CONFIG_405EP)
-#define EBC_NUM_BANKS	5
-#endif
-
-#if defined(CONFIG_405EX) || \
-    defined(CONFIG_460SX)
-#define EBC_NUM_BANKS	4
-#endif
-
-#if defined(CONFIG_440EP) || defined(CONFIG_440GR) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define EBC_NUM_BANKS	6
-#endif
-
-#if defined(CONFIG_440SP) || defined(CONFIG_440SPE)
-#define EBC_NUM_BANKS	3
-#endif
-
-#if defined(CONFIG_47x)
 #define EBC_NUM_BANKS	0
-#endif
 
 /* Bank Configuration Register */
 #define EBC_BXCR(n)		(n)

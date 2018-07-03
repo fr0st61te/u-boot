@@ -23,7 +23,6 @@
 #include <checkpoint.h>
 #include <fsp2.h>
 #include <fspboot.h>
-#include <pra.h>
 #include <rstinfo.h>
 #include <watchdog.h>
 #include <asm/ppc476fsp2.h>

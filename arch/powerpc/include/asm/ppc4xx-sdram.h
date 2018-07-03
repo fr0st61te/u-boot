@@ -14,29 +14,13 @@
  * SDRAM Controller
  */
 
-#ifndef CONFIG_405EP
-#define SDRAM0_BESR0	0x00	/* bus error syndrome reg a		*/
-#define SDRAM0_BESRS0	0x04	/* bus error syndrome reg set a		*/
-#define SDRAM0_BESR1	0x08	/* bus error syndrome reg b		*/
-#define SDRAM0_BESRS1	0x0c	/* bus error syndrome reg set b		*/
-#define SDRAM0_BEAR	0x10	/* bus error address reg		*/
-#endif
 #define SDRAM0_CFG	0x20	/* memory controller options 1		*/
 #define SDRAM0_STATUS	0x24	/* memory status			*/
 #define SDRAM0_RTR	0x30	/* refresh timer reg			*/
 #define SDRAM0_PMIT	0x34	/* power management idle timer		*/
 #define SDRAM0_B0CR	0x40	/* memory bank 0 configuration		*/
 #define SDRAM0_B1CR	0x44	/* memory bank 1 configuration		*/
-#ifndef CONFIG_405EP
-#define SDRAM0_B2CR	0x48	/* memory bank 2 configuration		*/
-#define SDRAM0_B3CR	0x4c	/* memory bank 3 configuration		*/
-#endif
 #define SDRAM0_TR	0x80	/* timing reg 1				*/
-#ifndef CONFIG_405EP
-#define SDRAM0_ECCCFG	0x94	/* ECC configuration			*/
-#define SDRAM0_ECCESR	0x98	/* ECC error status			*/
-#endif
-
 #endif /* CONFIG_SDRAM_PPC4xx_IBM_SDRAM */
 
 #if defined(CONFIG_SDRAM_PPC4xx_IBM_DDR)
@@ -228,12 +212,10 @@
 #define SDRAM_DLYCAL_DLCV_ENCODE(x)	(((x)<<2) & SDRAM_DLYCAL_DLCV_MASK)
 #define SDRAM_DLYCAL_DLCV_DECODE(x)	(((x) & SDRAM_DLYCAL_DLCV_MASK)>>2)
 
-#if !defined(CONFIG_405EX)
 /*
  * Memory queue defines
  */
 #define SDRAMQ_DCR_BASE 0x040
-
 #define SDRAM_R0BAS		(SDRAMQ_DCR_BASE+0x0)	/* rank 0 base address & size  */
 #define SDRAM_R1BAS		(SDRAMQ_DCR_BASE+0x1)	/* rank 1 base address & size  */
 #define SDRAM_R2BAS		(SDRAMQ_DCR_BASE+0x2)	/* rank 2 base address & size  */
@@ -262,30 +244,12 @@
 #define SDRAM_CONF1LL_RPEN	0x00000800		/* Read Passing Enable - Bit 20 */
 #define SDRAM_CONF1LL_RFTE	0x00000400		/* Read Flow Through Enable - Bit 21 */
 #define SDRAM_CONF1LL_MASK	0x0000F000		/* RPLM mask */
-
 #define SDRAM_ERRSTATLL		(SDRAMQ_DCR_BASE+0xC)	/* error status LL             */
 #define SDRAM_ERRADDULL		(SDRAMQ_DCR_BASE+0xD)	/* error address upper 32 LL   */
 #define SDRAM_ERRADDLLL		(SDRAMQ_DCR_BASE+0xE)	/* error address lower 32 LL   */
 #define SDRAM_CONFPATHB		(SDRAMQ_DCR_BASE+0xF)	/* configuration between paths */
 #define SDRAM_CONFPATHB_TPEN	0x08000000		/* Transaction Passing Enable - Bit 4 */
-
 #define SDRAM_PLBADDUHB		(SDRAMQ_DCR_BASE+0x10)  /* PLB base address upper 32 LL */
-
-/*
- * Memory Bank 0-7 configuration
- */
-#if defined(CONFIG_440SPE) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT) || \
-    defined(CONFIG_460SX)
-#define SDRAM_RXBAS_SDBA_MASK		0xFFE00000	/* Base address	*/
-#define SDRAM_RXBAS_SDBA_ENCODE(n)	((u32)(((phys_size_t)(n) >> 2) & 0xFFE00000))
-#define SDRAM_RXBAS_SDBA_DECODE(n)	((((phys_size_t)(n)) & 0xFFE00000) << 2)
-#endif /* CONFIG_440SPE */
-#if defined(CONFIG_440SP)
-#define SDRAM_RXBAS_SDBA_MASK		0xFF800000	/* Base address	*/
-#define SDRAM_RXBAS_SDBA_ENCODE(n)	((((u32)(n))&0xFF800000))
-#define SDRAM_RXBAS_SDBA_DECODE(n)	((((u32)(n))&0xFF800000))
-#endif /* CONFIG_440SP */
 #define SDRAM_RXBAS_SDSZ_MASK		0x0000FFC0	/* Size		*/
 #define SDRAM_RXBAS_SDSZ_ENCODE(n)	((((u32)(n))&0x3FF)<<6)
 #define SDRAM_RXBAS_SDSZ_DECODE(n)	((((u32)(n))>>6)&0x3FF)
@@ -300,37 +264,6 @@
 #define SDRAM_RXBAS_SDSZ_1024		0x0000E000	/* 1024M	*/
 #define SDRAM_RXBAS_SDSZ_2048		0x0000C000	/* 2048M	*/
 #define SDRAM_RXBAS_SDSZ_4096		0x00008000	/* 4096M	*/
-#else /* CONFIG_405EX */
-/*
- * XXX - ToDo:
- * Revisit this file to check if all these 405EX defines are correct and
- * can be used in the common 44x_spd_ddr2 code as well. sr, 2008-06-02
- */
-#define SDRAM_RXBAS_SDSZ_MASK		PPC_REG_VAL(19, 0xF)
-#define SDRAM_RXBAS_SDSZ_4MB	   	PPC_REG_VAL(19, 0x0)
-#define SDRAM_RXBAS_SDSZ_8MB	   	PPC_REG_VAL(19, 0x1)
-#define SDRAM_RXBAS_SDSZ_16MB	   	PPC_REG_VAL(19, 0x2)
-#define SDRAM_RXBAS_SDSZ_32MB	   	PPC_REG_VAL(19, 0x3)
-#define SDRAM_RXBAS_SDSZ_64MB	   	PPC_REG_VAL(19, 0x4)
-#define SDRAM_RXBAS_SDSZ_128MB	   	PPC_REG_VAL(19, 0x5)
-#define SDRAM_RXBAS_SDSZ_256MB	   	PPC_REG_VAL(19, 0x6)
-#define SDRAM_RXBAS_SDSZ_512MB	   	PPC_REG_VAL(19, 0x7)
-#define SDRAM_RXBAS_SDSZ_1024MB	   	PPC_REG_VAL(19, 0x8)
-#define SDRAM_RXBAS_SDSZ_2048MB	   	PPC_REG_VAL(19, 0x9)
-#define SDRAM_RXBAS_SDSZ_4096MB		PPC_REG_VAL(19, 0xA)
-#define SDRAM_RXBAS_SDSZ_8192MB		PPC_REG_VAL(19, 0xB)
-#define SDRAM_RXBAS_SDSZ_8      	SDRAM_RXBAS_SDSZ_8MB
-#define SDRAM_RXBAS_SDSZ_16     	SDRAM_RXBAS_SDSZ_16MB
-#define SDRAM_RXBAS_SDSZ_32     	SDRAM_RXBAS_SDSZ_32MB
-#define SDRAM_RXBAS_SDSZ_64     	SDRAM_RXBAS_SDSZ_64MB
-#define SDRAM_RXBAS_SDSZ_128    	SDRAM_RXBAS_SDSZ_128MB
-#define SDRAM_RXBAS_SDSZ_256    	SDRAM_RXBAS_SDSZ_256MB
-#define SDRAM_RXBAS_SDSZ_512    	SDRAM_RXBAS_SDSZ_512MB
-#define SDRAM_RXBAS_SDSZ_1024		SDRAM_RXBAS_SDSZ_1024MB
-#define SDRAM_RXBAS_SDSZ_2048		SDRAM_RXBAS_SDSZ_2048MB
-#define SDRAM_RXBAS_SDSZ_4096		SDRAM_RXBAS_SDSZ_4096MB
-#define SDRAM_RXBAS_SDSZ_8192		SDRAM_RXBAS_SDSZ_8192MB
-#endif /* CONFIG_405EX */
 
 /* The mode definitions are the same for all PPC4xx variants */
 #define SDRAM_RXBAS_SDAM_MODE0		PPC_REG_VAL(23, 0x0)
@@ -349,19 +282,7 @@
 /*
  * Memory controller registers
  */
-#if defined(CONFIG_405EX)
-#define SDRAM_BESR	0x00	/* PLB bus error status (read/clear)         */
-#define SDRAM_BESRT	0x01	/* PLB bus error status (test/set)           */
-#define SDRAM_BEARL	0x02	/* PLB bus error address low                 */
-#define SDRAM_BEARH	0x03	/* PLB bus error address high                */
-#define SDRAM_WMIRQ	0x06	/* PLB write master interrupt (read/clear)   */
-#define SDRAM_WMIRQT	0x07	/* PLB write master interrupt (test/set)     */
-#define SDRAM_PLBOPT	0x08	/* PLB slave options                         */
-#define SDRAM_PUABA	0x09	/* PLB upper address base                    */
-#define SDRAM_MCSTAT	0x1F	/* memory controller status                  */
-#else /* CONFIG_405EX */
 #define SDRAM_MCSTAT	0x14	/* memory controller status                  */
-#endif /* CONFIG_405EX */
 #define SDRAM_MCOPT1	0x20	/* memory controller options 1               */
 #define SDRAM_MCOPT2	0x21	/* memory controller options 2               */
 #define SDRAM_MODT0	0x22	/* on die termination for bank 0             */
@@ -407,15 +328,9 @@
 #define SDRAM_MEMODE	0x89	/* memory extended mode                      */
 #define SDRAM_ECCES	0x98	/* ECC error status                          */
 #define SDRAM_CID	0xA4	/* core ID                                   */
-#if !defined(CONFIG_405EX)
 #define SDRAM_RID	0xA8	/* revision ID                               */
-#endif
 #define SDRAM_FCSR	0xB0	/* feedback calibration status               */
 #define SDRAM_RTSR	0xB1	/* run time status tracking                  */
-#if  defined(CONFIG_405EX)
-#define SDRAM_RID	0xF8	/* revision ID                               */
-#endif
-
 /*
  * Memory Controller Bus Error Status
  */

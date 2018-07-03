@@ -48,20 +48,6 @@
 #define MAL0_RXCTP1R	(MAL_DCR_BASE + 0x41)	/* RX 1 Channel table pointer */
 #define MAL0_RCBS0	(MAL_DCR_BASE + 0x60)	/* RX 0 Channel buffer size */
 #define MAL0_RCBS1	(MAL_DCR_BASE + 0x61)	/* RX 1 Channel buffer size */
-#if defined(CONFIG_440GX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define MAL0_RXCTP2R	(MAL_DCR_BASE + 0x42)	/* RX 2 Channel table pointer */
-#define MAL0_RXCTP3R	(MAL_DCR_BASE + 0x43)	/* RX 3 Channel table pointer */
-#define MAL0_RXCTP8R	(MAL_DCR_BASE + 0x48)	/* RX 8 Channel table pointer */
-#define MAL0_RXCTP16R	(MAL_DCR_BASE + 0x50)	/* RX 16 Channel table pointer*/
-#define MAL0_RXCTP24R	(MAL_DCR_BASE + 0x58)	/* RX 24 Channel table pointer*/
-#define MAL0_RCBS2	(MAL_DCR_BASE + 0x62)	/* RX 2 Channel buffer size */
-#define MAL0_RCBS3	(MAL_DCR_BASE + 0x63)	/* RX 3 Channel buffer size */
-#define MAL0_RCBS8	(MAL_DCR_BASE + 0x68)	/* RX 8 Channel buffer size */
-#define MAL0_RCBS16	(MAL_DCR_BASE + 0x70)	/* RX 16 Channel buffer size */
-#define MAL0_RCBS24	(MAL_DCR_BASE + 0x78)	/* RX 24 Channel buffer size */
-#endif /* CONFIG_440GX */
-
 /* MADMAL transmit and receive status/control bits  */
 /* for COMMAC bits, refer to the COMMAC header file */
 
@@ -117,10 +103,7 @@
 #define MAL_ESR_PBEI	  0x00000001
       /* ^^			 ^^   */
       /* Mal IER		      */
-#if defined(CONFIG_440SPE) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT) || \
-    defined(CONFIG_405EX) || defined(CONFIG_47x)
+#if defined(CONFIG_47x)
 #define MAL_IER_PT	  0x00000080
 #define MAL_IER_PRE	  0x00000040
 #define MAL_IER_PWE	  0x00000020

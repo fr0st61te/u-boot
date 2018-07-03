@@ -13,16 +13,7 @@
 /*
  * Define the number of UIC's
  */
-#if defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT) || \
-    defined(CONFIG_460SX)
-#define UIC_MAX		4
-#elif defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_405EX)
-#define UIC_MAX		3
-#elif defined(CONFIG_440GP) || defined(CONFIG_440SP) || \
-    defined(CONFIG_440EP) || defined(CONFIG_440GR) || \
-    defined(CONFIG_47x)
+#if defined(CONFIG_47x)
 #define UIC_MAX		2
 #else
 #define UIC_MAX		1
@@ -47,12 +38,7 @@
  * are cascaded on. With this trick we can use the common UIC code for 440GX
  * too.
  */
-#if defined(CONFIG_440GX)
-#define UIC0_DCR_BASE 0x200
-#define UIC1_DCR_BASE 0xc0
-#define UIC2_DCR_BASE 0xd0
-#define UIC3_DCR_BASE 0x210
-#elif defined(CONFIG_47x)
+#if defined(CONFIG_47x)
 #define UIC0_DCR_BASE 0x2c0
 #define UIC1_DCR_BASE 0x358
 #define UIC2_DCR_BASE 0x000
@@ -108,177 +94,6 @@
  * Note: Please only define the interrupts really used in U-Boot here.
  * Those are the cascading and EMAC/MAL related interrupt.
  */
-
-#if defined(CONFIG_405EP) || defined(CONFIG_405GP)
-#define VECNUM_MAL_SERR		10
-#define VECNUM_MAL_TXEOB	11
-#define VECNUM_MAL_RXEOB	12
-#define VECNUM_MAL_TXDE		13
-#define VECNUM_MAL_RXDE		14
-#define VECNUM_ETH0		15
-#define VECNUM_ETH1_OFFS	2
-#define VECNUM_EIRQ6		29
-#endif /* defined(CONFIG_405EP) */
-
-#if defined(CONFIG_405EZ)
-#define VECNUM_USBDEV		15
-#define VECNUM_ETH0		16
-#define VECNUM_MAL_SERR		18
-#define VECNUM_MAL_TXDE		18
-#define VECNUM_MAL_RXDE		18
-#define VECNUM_MAL_TXEOB	19
-#define VECNUM_MAL_RXEOB	21
-#endif /* CONFIG_405EX */
-
-#if defined(CONFIG_405EX)
-/* UIC 0 */
-#define VECNUM_MAL_TXEOB	10
-#define VECNUM_MAL_RXEOB	11
-#define VECNUM_ETH0		24
-#define VECNUM_ETH1_OFFS	1
-#define VECNUM_UIC2NCI		28
-#define VECNUM_UIC2CI		29
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 1 */
-#define VECNUM_MAL_SERR		(32 + 0)
-#define VECNUM_MAL_TXDE		(32 + 1)
-#define VECNUM_MAL_RXDE		(32 + 2)
-#endif /* CONFIG_405EX */
-
-#if defined(CONFIG_440GP) || \
-    defined(CONFIG_440EP) || defined(CONFIG_440GR)
-/* UIC 0 */
-#define VECNUM_MAL_TXEOB	10
-#define VECNUM_MAL_RXEOB	11
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 1 */
-#define VECNUM_MAL_SERR		(32 + 0)
-#define VECNUM_MAL_TXDE		(32 + 1)
-#define VECNUM_MAL_RXDE		(32 + 2)
-#define VECNUM_USBDEV		(32 + 23)
-#define VECNUM_ETH0		(32 + 28)
-#define VECNUM_ETH1_OFFS	2
-#endif /* CONFIG_440GP */
-
-#if defined(CONFIG_440GX)
-/* UICB 0 (440GX only) */
-/*
- * All those defines below are off-by-one, so that the common UIC code
- * can be used. So VECNUM_UIC1CI refers to VECNUM_UIC0CI etc.
- */
-#define VECNUM_UIC1CI		0
-#define VECNUM_UIC1NCI		1
-#define VECNUM_UIC2CI		2
-#define VECNUM_UIC2NCI		3
-#define VECNUM_UIC3CI		4
-#define VECNUM_UIC3NCI		5
-
-/* UIC 0, used as UIC1 on 440GX because of UICB0 */
-#define VECNUM_MAL_TXEOB	(32 + 10)
-#define VECNUM_MAL_RXEOB	(32 + 11)
-
-/* UIC 1, used as UIC2 on 440GX because of UICB0 */
-#define VECNUM_MAL_SERR		(64 + 0)
-#define VECNUM_MAL_TXDE		(64 + 1)
-#define VECNUM_MAL_RXDE		(64 + 2)
-#define VECNUM_ETH0		(64 + 28)
-#define VECNUM_ETH1_OFFS	2
-#endif /* CONFIG_440GX */
-
-#if defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
-/* UIC 0 */
-#define VECNUM_MAL_TXEOB	10
-#define VECNUM_MAL_RXEOB	11
-#define VECNUM_USBDEV		20
-#define VECNUM_ETH0		24
-#define VECNUM_ETH1_OFFS	1
-#define VECNUM_UIC2NCI		28
-#define VECNUM_UIC2CI		29
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 1 */
-#define VECNUM_MAL_SERR		(32 + 0)
-#define VECNUM_MAL_TXDE		(32 + 1)
-#define VECNUM_MAL_RXDE		(32 + 2)
-
-/* UIC 2 */
-#define VECNUM_EIRQ2		(64 + 3)
-#endif /* CONFIG_440EPX */
-
-#if defined(CONFIG_440SP)
-/* UIC 0 */
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 1 */
-#define VECNUM_MAL_SERR		(32 + 1)
-#define VECNUM_MAL_TXDE		(32 + 2)
-#define VECNUM_MAL_RXDE		(32 + 3)
-#define VECNUM_MAL_TXEOB	(32 + 6)
-#define VECNUM_MAL_RXEOB	(32 + 7)
-#define VECNUM_ETH0		(32 + 28)
-#endif /* CONFIG_440SP */
-
-#if defined(CONFIG_440SPE)
-/* UIC 0 */
-#define VECNUM_UIC2NCI		10
-#define VECNUM_UIC2CI		11
-#define VECNUM_UIC3NCI		16
-#define VECNUM_UIC3CI		17
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 1 */
-#define VECNUM_MAL_SERR		(32 + 1)
-#define VECNUM_MAL_TXDE		(32 + 2)
-#define VECNUM_MAL_RXDE		(32 + 3)
-#define VECNUM_MAL_TXEOB	(32 + 6)
-#define VECNUM_MAL_RXEOB	(32 + 7)
-#define VECNUM_ETH0		(32 + 28)
-#endif /* CONFIG_440SPE */
-
-#if defined(CONFIG_460EX) || defined(CONFIG_460GT)
-/* UIC 0 */
-#define VECNUM_UIC2NCI		10
-#define VECNUM_UIC2CI		11
-#define VECNUM_UIC3NCI		16
-#define VECNUM_UIC3CI		17
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 2 */
-#define VECNUM_MAL_SERR		(64 + 3)
-#define	VECNUM_MAL_TXDE		(64 + 4)
-#define	VECNUM_MAL_RXDE		(64 + 5)
-#define VECNUM_MAL_TXEOB	(64 + 6)
-#define	VECNUM_MAL_RXEOB	(64 + 7)
-#define	VECNUM_ETH0		(64 + 16)
-#define VECNUM_ETH1_OFFS	1
-#endif /* CONFIG_460EX */
-
-#if defined(CONFIG_460SX)
-/* UIC 0 */
-#define VECNUM_UIC2NCI		10
-#define VECNUM_UIC2CI		11
-#define VECNUM_UIC3NCI		16
-#define VECNUM_UIC3CI		17
-#define	VECNUM_ETH0		19
-#define VECNUM_ETH1_OFFS	1
-#define VECNUM_UIC1NCI		30
-#define VECNUM_UIC1CI		31
-
-/* UIC 1 */
-#define VECNUM_MAL_SERR		(32 + 1)
-#define	VECNUM_MAL_TXDE		(32 + 2)
-#define	VECNUM_MAL_RXDE		(32 + 3)
-#define VECNUM_MAL_TXEOB	(32 + 6)
-#define	VECNUM_MAL_RXEOB	(32 + 7)
-#endif /* CONFIG_460EX */
 
 #if !defined(VECNUM_ETH1_OFFS)
 #define VECNUM_ETH1_OFFS	1

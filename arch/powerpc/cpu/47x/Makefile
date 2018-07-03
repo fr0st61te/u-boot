@@ -15,7 +15,6 @@ obj-y	+= 44x_spd_ddr.o
 obj-y	+= 4xx_uart.o
 obj-y	+= cpu.o
 obj-y	+= cpu_init.o
-obj-y	+= fdt.o
 obj-y	+= interrupts.o
 obj-y	+= sdram.o
 obj-y	+= speed.o

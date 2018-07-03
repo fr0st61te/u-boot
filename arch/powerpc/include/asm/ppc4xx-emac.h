@@ -16,10 +16,6 @@
 |  29-Apr-99   Created							   MKW
 |
 +----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------+
-|  19-Nov-03   Travis Sawyer, Sandburst Corporation, tsawyer@sandburst.com
-|	       ported to handle 440GP and 440GX multiple EMACs
-+----------------------------------------------------------------------------*/
 
 #ifndef _PPC4XX_ENET_H_
 #define _PPC4XX_ENET_H_
@@ -114,15 +110,7 @@ typedef struct emac_4xx_hw_st {
 } EMAC_4XX_HW_ST, *EMAC_4XX_HW_PST;
 
 
-#if defined(CONFIG_440GX) || defined(CONFIG_460GT)
-#define EMAC_NUM_DEV		4
-#elif (defined(CONFIG_440) || defined(CONFIG_405EP)) &&	\
-	!defined(CONFIG_440SP) && !defined(CONFIG_440SPE)
 #define EMAC_NUM_DEV		2
-#else
-#define EMAC_NUM_DEV		1
-#endif
-
 #ifdef CONFIG_IBM_EMAC4_V4	/* EMAC4 V4 changed bit setting */
 #define EMAC_STACR_OC_MASK	(0x00008000)
 #else
@@ -144,13 +132,7 @@ typedef struct emac_4xx_hw_st {
 #define EMAC_PHY_MODE_MII_NONE		7
 
 /* ZMII Bridge Register addresses */
-#if defined(CONFIG_440EP) || defined(CONFIG_440GR) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define ZMII0_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0D00)
-#else
 #define ZMII0_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0780)
-#endif
 #define ZMII0_FER		(ZMII0_BASE)
 #define ZMII0_SSR		(ZMII0_BASE + 4)
 #define ZMII0_SMIISR		(ZMII0_BASE + 8)
@@ -161,11 +143,9 @@ typedef struct emac_4xx_hw_st {
 #define ZMII_FER_SMII		(0x4)
 #define ZMII_FER_RMII		(0x2)
 #define ZMII_FER_MII		(0x1)
-
 #define ZMII_FER_RSVD11		(0x00200000)
 #define ZMII_FER_RSVD10		(0x00100000)
 #define ZMII_FER_RSVD14_31	(0x0003FFFF)
-
 #define ZMII_FER_V(__x)		(((3 - __x) * 4) + 16)
 
 
@@ -174,7 +154,6 @@ typedef struct emac_4xx_hw_st {
 #define ZMII0_SSR_FSS		(0x2)
 #define ZMII0_SSR_SP		(0x1)
 #define ZMII0_SSR_RSVD16_31	(0x0000FFFF)
-
 #define ZMII0_SSR_V(__x)		(((3 - __x) * 4) + 16)
 
 
@@ -187,27 +166,12 @@ typedef struct emac_4xx_hw_st {
 #define ZMII0_SMIISR_ED		(0x04)
 #define ZMII0_SMIISR_ES		(0x02)
 #define ZMII0_SMIISR_EF		(0x01)
-
 #define ZMII0_SMIISR_V(__x)	((3 - __x) * 8)
 
 /* RGMII Register Addresses */
-#if defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
-#define RGMII_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x1000)
-#elif defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define RGMII_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x1500)
-#elif defined(CONFIG_405EX)
-#define RGMII_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0xB00)
-#elif defined(CONFIG_47x)
 #define RGMII_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x600)
-#else
-#define RGMII_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0790)
-#endif
 #define RGMII_FER		(RGMII_BASE + 0x00)
 #define RGMII_SSR		(RGMII_BASE + 0x04)
-
-#if defined(CONFIG_460GT)
-#define RGMII1_BASE_OFFSET	0x100
-#endif
 
 /* RGMII Function Enable (FER) Register Bit Definitions */
 #define RGMII_FER_DIS		(0x00)
@@ -216,113 +180,17 @@ typedef struct emac_4xx_hw_st {
 #define RGMII_FER_TBI		(0x06)
 #define RGMII_FER_GMII		(0x07)
 #define RGMII_FER_MII		(RGMII_FER_GMII)
-
 #define RGMII_FER_V(__x)	((__x - 2) * 4)
-
 #define RGMII_FER_MDIO(__x)	(1 << (19 - (__x)))
 
 /* RGMII Speed Selection Register Bit Definitions */
 #define RGMII_SSR_SP_10MBPS	(0x01)
 #define RGMII_SSR_SP_100MBPS	(0x02)
 #define RGMII_SSR_SP_1000MBPS	(0x04)
-
-#if defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT) || \
-    defined(CONFIG_405EX)
-#define RGMII_SSR_V(__x)	((__x) * 8)
-#else
 #define RGMII_SSR_V(__x)	((__x -2) * 8)
-#endif
-
-/*---------------------------------------------------------------------------+
-|  TCP/IP Acceleration Hardware (TAH) 440GX Only
-+---------------------------------------------------------------------------*/
-#if defined(CONFIG_440GX)
-#define TAH_BASE	(CONFIG_SYS_PERIPHERAL_BASE + 0x0B50)
-#define TAH_REVID	(TAH_BASE + 0x0)    /* Revision ID (RO)*/
-#define TAH_MR		(TAH_BASE + 0x10)   /* Mode Register (R/W) */
-#define TAH_SSR0	(TAH_BASE + 0x14)   /* Segment Size Reg 0 (R/W) */
-#define TAH_SSR1	(TAH_BASE + 0x18)   /* Segment Size Reg 1 (R/W) */
-#define TAH_SSR2	(TAH_BASE + 0x1C)   /* Segment Size Reg 2 (R/W) */
-#define TAH_SSR3	(TAH_BASE + 0x20)   /* Segment Size Reg 3 (R/W) */
-#define TAH_SSR4	(TAH_BASE + 0x24)   /* Segment Size Reg 4 (R/W) */
-#define TAH_SSR5	(TAH_BASE + 0x28)   /* Segment Size Reg 5 (R/W) */
-#define TAH_TSR		(TAH_BASE + 0x2C)   /* Transmit Status Register (RO) */
-
-/* TAH Revision */
-#define TAH_REV_RN_M		(0x000FFF00)	    /* Revision Number */
-#define TAH_REV_BN_M		(0x000000FF)	    /* Branch Revision Number */
-
-#define TAH_REV_RN_V		(8)
-#define TAH_REV_BN_V		(0)
-
-/* TAH Mode Register */
-#define TAH_MR_CVR	(0x80000000)	    /* Checksum verification on RX */
-#define TAH_MR_SR	(0x40000000)	    /* Software reset */
-#define TAH_MR_ST	(0x3F000000)	    /* Send Threshold */
-#define TAH_MR_TFS	(0x00E00000)	    /* Transmit FIFO size */
-#define TAH_MR_DTFP	(0x00100000)	    /* Disable TX FIFO parity */
-#define TAH_MR_DIG	(0x00080000)	    /* Disable interrupt generation */
-#define TAH_MR_RSVD	(0x0007FFFF)	    /* Reserved */
-
-#define TAH_MR_ST_V	(20)
-#define TAH_MR_TFS_V	(17)
-
-#define TAH_MR_TFS_2K	(0x1)	    /* Transmit FIFO size 2Kbyte */
-#define TAH_MR_TFS_4K	(0x2)	    /* Transmit FIFO size 4Kbyte */
-#define TAH_MR_TFS_6K	(0x3)	    /* Transmit FIFO size 6Kbyte */
-#define TAH_MR_TFS_8K	(0x4)	    /* Transmit FIFO size 8Kbyte */
-#define TAH_MR_TFS_10K	(0x5)	    /* Transmit FIFO size 10Kbyte (max)*/
-
-
-/* TAH Segment Size Registers 0:5 */
-#define TAH_SSR_RSVD0	(0xC0000000)	    /* Reserved */
-#define TAH_SSR_SS	(0x3FFE0000)	    /* Segment size in multiples of 2 */
-#define TAH_SSR_RSVD1	(0x0001FFFF)	    /* Reserved */
-
-/* TAH Transmit Status Register */
-#define TAH_TSR_TFTS	(0x80000000)	    /* Transmit FIFO too small */
-#define TAH_TSR_UH	(0x40000000)	    /* Unrecognized header */
-#define TAH_TSR_NIPF	(0x20000000)	    /* Not IPv4 */
-#define TAH_TSR_IPOP	(0x10000000)	    /* IP option present */
-#define TAH_TSR_NISF	(0x08000000)	    /* No IEEE SNAP format */
-#define TAH_TSR_ILTS	(0x04000000)	    /* IP length too short */
-#define TAH_TSR_IPFP	(0x02000000)	    /* IP fragment present */
-#define TAH_TSR_UP	(0x01000000)	    /* Unsupported protocol */
-#define TAH_TSR_TFP	(0x00800000)	    /* TCP flags present */
-#define TAH_TSR_SUDP	(0x00400000)	    /* Segmentation for UDP */
-#define TAH_TSR_DLM	(0x00200000)	    /* Data length mismatch */
-#define TAH_TSR_SIEEE	(0x00100000)	    /* Segmentation for IEEE */
-#define TAH_TSR_TFPE	(0x00080000)	    /* Transmit FIFO parity error */
-#define TAH_TSR_SSTS	(0x00040000)	    /* Segment size too small */
-#define TAH_TSR_RSVD	(0x0003FFFF)	    /* Reserved */
-#endif /* CONFIG_440GX */
-
 
 /* Ethernet MAC Regsiter Addresses */
-#if defined(CONFIG_440)
-#if defined(CONFIG_440EP) || defined(CONFIG_440GR) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT)
-#define EMAC0_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0E00)
-#elif defined(CONFIG_47x)
 #define EMAC0_BASE		(CONFIG_SYS_PERIPHERAL_BASE)
-#else
-#define EMAC0_BASE		(CONFIG_SYS_PERIPHERAL_BASE + 0x0800)
-#endif
-#else
-#if defined(CONFIG_405EZ) || defined(CONFIG_405EX)
-#define EMAC0_BASE		0xEF600900
-#else
-#define EMAC0_BASE		0xEF600800
-#endif
-#endif
-
-#if defined(CONFIG_440EPX)
-#define EMAC1_BASE		0xEF600F00
-#define EMAC1_MR1		(EMAC1_BASE + 0x04)
-#endif
-
 #define EMAC0_MR0		(EMAC0_BASE)
 #define EMAC0_MR1		(EMAC0_BASE + 0x04)
 #define EMAC0_TMR0		(EMAC0_BASE + 0x08)
@@ -349,49 +217,6 @@ typedef struct emac_4xx_hw_st {
 #define EMAC_MR0_TXE		(0x10000000)
 #define EMAC_MR0_RXE		(0x08000000)
 #define EMAC_MR0_WKE		(0x04000000)
-
-/* on 440GX EMAC_MR1 has a different layout! */
-#if defined(CONFIG_440GX) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
-    defined(CONFIG_440SP) || defined(CONFIG_440SPE) || \
-    defined(CONFIG_460EX) || defined(CONFIG_460GT) || \
-    defined(CONFIG_405EX)
-/* MODE Reg 1 */
-#define EMAC_MR1_FDE		(0x80000000)
-#define EMAC_MR1_ILE		(0x40000000)
-#define EMAC_MR1_VLE		(0x20000000)
-#define EMAC_MR1_EIFC		(0x10000000)
-#define EMAC_MR1_APP		(0x08000000)
-#define EMAC_MR1_RSVD		(0x06000000)
-#define EMAC_MR1_IST		(0x01000000)
-#define EMAC_MR1_MF_1000GPCS	(0x00C00000)
-#define EMAC_MR1_MF_1000MBPS	(0x00800000)	/* 0's for 10MBPS */
-#define EMAC_MR1_MF_100MBPS	(0x00400000)
-#define EMAC_MR1_RFS_MASK	(0x00380000)
-#define EMAC_MR1_RFS_16K		(0x00280000)
-#define EMAC_MR1_RFS_8K		(0x00200000)
-#define EMAC_MR1_RFS_4K		(0x00180000)
-#define EMAC_MR1_RFS_2K		(0x00100000)
-#define EMAC_MR1_RFS_1K		(0x00080000)
-#define EMAC_MR1_TX_FIFO_MASK	(0x00070000)
-#define EMAC_MR1_TX_FIFO_16K	(0x00050000)
-#define EMAC_MR1_TX_FIFO_8K	(0x00040000)
-#define EMAC_MR1_TX_FIFO_4K	(0x00030000)
-#define EMAC_MR1_TX_FIFO_2K	(0x00020000)
-#define EMAC_MR1_TX_FIFO_1K	(0x00010000)
-#define EMAC_MR1_TR_MULTI	(0x00008000)	/* 0'x for single packet */
-#define EMAC_MR1_MWSW		(0x00007000)
-#define EMAC_MR1_JUMBO_ENABLE	(0x00000800)
-#define EMAC_MR1_IPPA		(0x000007c0)
-#define EMAC_MR1_IPPA_SET(id)	(((id) & 0x1f) << 6)
-#define EMAC_MR1_IPPA_GET(id)	(((id) >> 6) & 0x1f)
-#define EMAC_MR1_OBCI_GT100	(0x00000020)
-#define EMAC_MR1_OBCI_100	(0x00000018)
-#define EMAC_MR1_OBCI_83		(0x00000010)
-#define EMAC_MR1_OBCI_66		(0x00000008)
-#define EMAC_MR1_RSVD1		(0x00000007)
-#else /* defined(CONFIG_440GX) */
-/* EMAC_MR1 is the same on 405GP, 405GPr, 405EP, 440GP, 440EP */
 #define EMAC_MR1_FDE		0x80000000
 #define EMAC_MR1_ILE		0x40000000
 #define EMAC_MR1_VLE		0x20000000
@@ -414,19 +239,10 @@ typedef struct emac_4xx_hw_st {
 #define EMAC_MR1_TR0_MULTI	0x00008000
 #define EMAC_MR1_TR1_DEPEND	0x00004000
 #define EMAC_MR1_TR1_MULTI	0x00002000
-#if defined(CONFIG_440EP) || defined(CONFIG_440GR)
-#define EMAC_MR1_JUMBO_ENABLE	0x00001000
-#endif /* defined(CONFIG_440EP) || defined(CONFIG_440GR) */
-#endif /* defined(CONFIG_440GX) */
 
 #define EMAC_MR1_FIFO_MASK	(EMAC_MR1_RFS_MASK | EMAC_MR1_TX_FIFO_MASK)
-#if defined(CONFIG_405EZ)
-/* 405EZ only supports 512 bytes fifos */
-#define EMAC_MR1_FIFO_SIZE	(EMAC_MR1_RFS_512 | EMAC_MR1_TX_FIFO_512)
-#else
 /* Set receive fifo to 4k and tx fifo to 2k */
 #define EMAC_MR1_FIFO_SIZE	(EMAC_MR1_RFS_4K | EMAC_MR1_TX_FIFO_2K)
-#endif
 
 /* Transmit Mode Register 0 */
 #define EMAC_TMR0_GNP0		(0x80000000)
