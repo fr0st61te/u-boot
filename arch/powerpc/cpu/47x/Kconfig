@@ -10,7 +10,6 @@ choice
 
 config SOC_IBM_FSP2
 	bool "support fsp2"
-	select 440
 	select PANIC_HANG
 	select IBM_EMAC4
 	select BOARD_EARLY_INIT_F
@@ -20,9 +19,6 @@ config SOC_IBM_FSP2
 	select UART750
 
 endchoice
-
-config 440
-	bool
 
 config SYS_PERIPHERAL_BASE
 	bool
