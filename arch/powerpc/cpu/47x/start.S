@@ -248,20 +248,11 @@ tlbtab:
  * space after reset.
  */
 
-#if defined(CONFIG_440)
     .section .bootpg,"ax"
     .globl _start_440
 
 /**************************************************************************/
 _start_440:
-	/*--------------------------------------------------------------------+
-	| 440EPX BUP Change - Hardware team request
-	+--------------------------------------------------------------------*/
-#if defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
-	sync
-	nop
-	nop
-#endif
 	/*----------------------------------------------------------------+
 	| Core bug fix.  Clear the esr
 	+-----------------------------------------------------------------*/
@@ -278,17 +269,10 @@ _start_440:
 	mtspr	SPRN_SRR1,r0
 	mtspr	SPRN_CSRR0,r0
 	mtspr	SPRN_CSRR1,r0
-	/* NOTE: 440GX adds machine check status regs */
-#if defined(CONFIG_440) && !defined(CONFIG_440GP)
 	mtspr	SPRN_MCSRR0,r0
 	mtspr	SPRN_MCSRR1,r0
 	mfspr	r1,SPRN_MCSR
-#if !defined(CONFIG_47x)
-	mtspr	SPRN_MCSR,r1
-#else
 	mtspr	SPRN_MCSR_C,r1
-#endif /* !CONFIG_47x */
-#endif
 
 	/*----------------------------------------------------------------*/
 	/* CCR0 init */
@@ -334,31 +318,6 @@ _start_440:
 
 	mtspr	SPRN_DBSR,r1	/* Clear all valid bits */
 skip_debug_init:
-
-#if defined (CONFIG_440SPE)
-	/*----------------------------------------------------------------+
-	| Initialize Core Configuration Reg1.
-	| a. ICDPEI: Record even parity. Normal operation.
-	| b. ICTPEI: Record even parity. Normal operation.
-	| c. DCTPEI: Record even parity. Normal operation.
-	| d. DCDPEI: Record even parity. Normal operation.
-	| e. DCUPEI: Record even parity. Normal operation.
-	| f. DCMPEI: Record even parity. Normal operation.
-	| g. FCOM:   Normal operation
-	| h. MMUPEI: Record even parity. Normal operation.
-	| i. FFF:    Flush only as much data as necessary.
-	| j. TCS:    Timebase increments from CPU clock.
-	+-----------------------------------------------------------------*/
-	li	r0,0
-	mtspr	SPRN_CCR1, r0
-
-	/*----------------------------------------------------------------+
-	| Reset the timebase.
-	| The previous write to CCR1 sets the timebase source.
-	+-----------------------------------------------------------------*/
-	mtspr	SPRN_TBWL, r0
-	mtspr	SPRN_TBWU, r0
-#endif
 
 	/*----------------------------------------------------------------*/
 	/* Setup interrupt vectors */
@@ -461,23 +420,7 @@ tlbnxt:	addi	r4,r4,1		/* Next TLB */
 	/*----------------------------------------------------------------*/
 	/* TLB entry setup -- step thru tlbtab */
 	/*----------------------------------------------------------------*/
-#if defined(CONFIG_440SPE_REVA)
-	/*----------------------------------------------------------------*/
-	/* We have different TLB tables for revA and rev B of 440SPe */
-	/*----------------------------------------------------------------*/
-	mfspr	r1, PVR
-	lis	r0,0x5342
-	ori	r0,r0,0x1891
-	cmpw	r7,r1,r0
-	bne	r7,..revA
-	bl	tlbtabB
-	b	..goon
-..revA:
-	bl	tlbtabA
-..goon:
-#else
 	bl	tlbtab		/* Get tlbtab pointer */
-#endif
 	mr	r5,r0
 	li	r1,0x003f	/* 64 TLB entries max */
 	mtctr	r1
@@ -514,7 +457,6 @@ tlbnx2:	addi	r4,r4,1		/* Next TLB */
 	mflr	r1
 	mtspr	SPRN_SRR0,r1
 	rfi
-#endif /* CONFIG_440 */
 
 /*
  * r3 - 1st arg to board_init(): IMMP pointer
@@ -534,12 +476,8 @@ _start_of_vectors:
 /* Critical input. */
 	CRIT_EXCEPTION(0x100, CritcalInput, UnknownException)
 
-#ifdef CONFIG_440
 /* Machine check */
 	MCK_EXCEPTION(0x200, MachineCheck, MachineCheckException)
-#else
-	CRIT_EXCEPTION(0x200, MachineCheck, MachineCheckException)
-#endif /* CONFIG_440 */
 
 /* Data Storage exception. */
 	STD_EXCEPTION(0x300, DataStorage, UnknownException)
@@ -569,21 +507,13 @@ ProgramCheck:
 	EXC_XFER_TEMPLATE(ProgramCheck, ProgramCheckException,
 		MSR_KERNEL, COPY_EE)
 
-#ifdef CONFIG_440
 	STD_EXCEPTION(0x800, FPUnavailable, UnknownException)
 	STD_EXCEPTION(0x900, Decrementer, DecrementerPITException)
 	STD_EXCEPTION(0xa00, APU, UnknownException)
-#endif
 	STD_EXCEPTION(0xc00, SystemCall, UnknownException)
 
-#ifdef CONFIG_440
 	STD_EXCEPTION(0x1300, DataTLBError, UnknownException)
 	STD_EXCEPTION(0x1400, InstructionTLBError, UnknownException)
-#else
-	STD_EXCEPTION(0x1000, PIT, DecrementerPITException)
-	STD_EXCEPTION(0x1100, InstructionTLBMiss, UnknownException)
-	STD_EXCEPTION(0x1200, DataTLBMiss, UnknownException)
-#endif
 	CRIT_EXCEPTION(0x2000, DebugBreakpoint, DebugException )
 
 	.globl	_end_of_vectors
@@ -604,9 +534,6 @@ _start:
 	bl	board_init_f	/* run 1st part of board init code (in Flash)*/
 	/* NOTREACHED - board_init_f() does not return */
 #endif
-
-/*****************************************************************************/
-#if defined(CONFIG_440)
 
 	/*----------------------------------------------------------------*/
 	/* Clear and set up some registers. */
@@ -687,19 +614,6 @@ _start:
 #endif /* CONFIG_SYS_INIT_RAM_DCACHE */
 
 #if !defined(CONFIG_SOC_IBM_FSP2)
-	/* 440EP & 440GR are only 440er PPC's without internal SRAM */
-#if !defined(CONFIG_440EP) && !defined(CONFIG_440GR)
-	/* not all PPC's have internal SRAM usable as L2-cache */
-#if defined(CONFIG_440GX) || \
-    defined(CONFIG_440SP) || defined(CONFIG_440SPE) || \
-    defined(CONFIG_460SX)
-	mtdcr	L2_CACHE_CFG,r0		/* Ensure L2 Cache is off */
-#elif defined(CONFIG_460EX) || defined(CONFIG_460GT)
-	lis	r1, 0x0000
-	ori	r1,r1,0x0008		/* Set L2_CACHE_CFG[RDBW]=1 */
-	mtdcr	L2_CACHE_CFG,r1
-#endif
-
 	lis	r2,0x7fff
 	ori	r2,r2,0xffff
 	mfdcr	r1,ISRAM0_DPC
@@ -710,65 +624,6 @@ _start:
 	mtdcr	ISRAM0_PMEG,r1
 
 	lis	r1,0x8000		/* BAS = 8000_0000 */
-#if defined(CONFIG_440GX) || defined(CONFIG_440SP)
-	ori	r1,r1,0x0980		/* first 64k */
-	mtdcr	ISRAM0_SB0CR,r1
-	lis	r1,0x8001
-	ori	r1,r1,0x0980		/* second 64k */
-	mtdcr	ISRAM0_SB1CR,r1
-	lis	r1, 0x8002
-	ori	r1,r1, 0x0980		/* third 64k */
-	mtdcr	ISRAM0_SB2CR,r1
-	lis	r1, 0x8003
-	ori	r1,r1, 0x0980		/* fourth 64k */
-	mtdcr	ISRAM0_SB3CR,r1
-#elif defined(CONFIG_440SPE) || defined(CONFIG_460EX) || \
-      defined(CONFIG_460GT)
-	lis	r1,0x0000		/* BAS = X_0000_0000 */
-	ori	r1,r1,0x0984		/* first 64k */
-	mtdcr	ISRAM0_SB0CR,r1
-	lis	r1,0x0001
-	ori	r1,r1,0x0984		/* second 64k */
-	mtdcr	ISRAM0_SB1CR,r1
-	lis	r1, 0x0002
-	ori	r1,r1, 0x0984		/* third 64k */
-	mtdcr	ISRAM0_SB2CR,r1
-	lis	r1, 0x0003
-	ori	r1,r1, 0x0984		/* fourth 64k */
-	mtdcr	ISRAM0_SB3CR,r1
-#if defined(CONFIG_460EX) || defined(CONFIG_460GT)
-	lis	r2,0x7fff
-	ori	r2,r2,0xffff
-	mfdcr	r1,ISRAM1_DPC
-	and	r1,r1,r2		/* Disable parity check */
-	mtdcr	ISRAM1_DPC,r1
-	mfdcr	r1,ISRAM1_PMEG
-	and	r1,r1,r2		/* Disable pwr mgmt */
-	mtdcr	ISRAM1_PMEG,r1
-
-	lis	r1,0x0004		/* BAS = 4_0004_0000 */
-	ori     r1,r1,ISRAM1_SIZE       /* ocm size */
-	mtdcr	ISRAM1_SB0CR,r1
-#endif
-#elif defined(CONFIG_460SX)
-	lis     r1,0x0000               /* BAS = 0000_0000 */
-	ori     r1,r1,0x0B84            /* first 128k */
-	mtdcr   ISRAM0_SB0CR,r1
-	lis     r1,0x0001
-	ori     r1,r1,0x0B84            /* second 128k */
-	mtdcr   ISRAM0_SB1CR,r1
-	lis     r1, 0x0002
-	ori     r1,r1, 0x0B84           /* third 128k */
-	mtdcr   ISRAM0_SB2CR,r1
-	lis     r1, 0x0003
-	ori     r1,r1, 0x0B84           /* fourth 128k */
-	mtdcr   ISRAM0_SB3CR,r1
-#elif defined(CONFIG_440GP)
-	ori	r1,r1,0x0380		/* 8k rw */
-	mtdcr	ISRAM0_SB0CR,r1
-	mtdcr	ISRAM0_SB1CR,r0		/* Disable bank 1 */
-#endif
-#endif /* #if !defined(CONFIG_440EP) && !defined(CONFIG_440GR) */
 #endif /* #if !defined(CONFIG_FSP2) */
 
 	/*----------------------------------------------------------------*/
@@ -805,8 +660,6 @@ _start:
 	li	r3, 0
 	bl	board_init_f
 	/* NOTREACHED - board_init_f() does not return */
-
-#endif /* CONFIG_440 */
 
 #if !defined(CONFIG_SPL_BUILD)
 /*
@@ -898,7 +751,6 @@ crit_return:
 	SYNC
 	rfci
 
-#ifdef CONFIG_440
 mck_return:
 	mfmsr	r28		/* Disable interrupts */
 	li	r4,0
@@ -928,9 +780,6 @@ mck_return:
 	lwz	r1,GPR1(r1)
 	SYNC
 	rfmci
-#endif /* CONFIG_440 */
-
-
 	.globl get_pvr
 get_pvr:
 	mfspr	r3, PVR
@@ -1098,14 +947,9 @@ relocate_code:
 	 * On some 440er platforms the cache is enabled in the first TLB (Boot-CS)
 	 * to speed up the boot process. Now this cache needs to be disabled.
 	 */
-#if defined(CONFIG_440)
 	/* Clear all potential pending exceptions */
 	mfspr	r1,SPRN_MCSR
-#if !defined(CONFIG_47x)
-	mtspr	SPRN_MCSR,r1
-#else
 	mtspr	SPRN_MCSR_C,r1
-#endif
 #if !defined(CONFIG_SOC_IBM_FSP2)
 	addi	r1,r0,CONFIG_SYS_TLB_FOR_BOOT_FLASH	/* Use defined TLB */
 	tlbre	r0,r1,0x0002		/* Read contents */
@@ -1114,7 +958,6 @@ relocate_code:
 	sync
 	isync
 #endif /* !defined(CONFIG_SOC_IBM_FSP2) */
-#endif /* defined(CONFIG_440) */
 	mr	r1,  r3		/* Set new stack pointer		*/
 	mr	r9,  r4		/* Save copy of Init Data pointer	*/
 	mr	r10, r5		/* Save copy of Destination Address	*/
@@ -1312,7 +1155,6 @@ trap_init:
 	li	r7, .L_ProgramCheck - _start + _START_OFFSET
 	bl	trap_reloc
 
-#ifdef CONFIG_440
 	li	r7, .L_FPUnavailable - _start + _START_OFFSET
 	bl	trap_reloc
 
@@ -1327,43 +1169,16 @@ trap_init:
 
 	li	r7, .L_DataTLBError - _start + _START_OFFSET
 	bl	trap_reloc
-#else /* CONFIG_440 */
-	li	r7, .L_PIT - _start + _START_OFFSET
-	bl	trap_reloc
-
-	li	r7, .L_InstructionTLBMiss - _start + _START_OFFSET
-	bl	trap_reloc
-
-	li	r7, .L_DataTLBMiss - _start + _START_OFFSET
-	bl	trap_reloc
-#endif /* CONFIG_440 */
-
 	li	r7, .L_DebugBreakpoint - _start + _START_OFFSET
 	bl	trap_reloc
 
-#if !defined(CONFIG_440)
 	addi	r7,r0,0x1000		/* set ME bit (Machine Exceptions) */
 	oris	r7,r7,0x0002		/* set CE bit (Critical Exceptions) */
 	mtmsr	r7			/* change MSR */
-#else
-	bl	__440_msr_set
-	b	__440_msr_continue
-
-__440_msr_set:
-	addi	r7,r0,0x1000		/* set ME bit (Machine Exceptions) */
-	oris	r7,r7,0x0002		/* set CE bit (Critical Exceptions) */
-	mtspr	SPRN_SRR1,r7
-	mflr	r7
-	mtspr	SPRN_SRR0,r7
-	rfi
-__440_msr_continue:
-#endif
-
 	mtlr	r4			/* restore link register	*/
 	blr
 #endif /* CONFIG_SPL_BUILD */
 
-#if defined(CONFIG_440)
 /*----------------------------------------------------------------------------+
 | dcbz_area.
 +----------------------------------------------------------------------------*/
@@ -1379,7 +1194,6 @@ __440_msr_continue:
 	sync
 	blr
 	function_epilog(dcbz_area)
-#endif /* CONFIG_440 */
 #endif /* CONFIG_SPL_BUILD */
 
 /*------------------------------------------------------------------------------- */
@@ -1418,7 +1232,6 @@ in32:
 	lwz	3,0x0000(3)
 	blr
 
-#if defined(CONFIG_440)
 /*----------------------------------------------------------------------------+
 | mttlb3.
 +----------------------------------------------------------------------------*/
@@ -1466,4 +1279,3 @@ in32:
 	TLBRE(3,3,0)
 	blr
 	function_epilog(mftlb1)
-#endif /* CONFIG_440 */
