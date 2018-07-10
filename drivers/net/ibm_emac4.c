@@ -40,7 +40,7 @@
 #include <asm/processor.h>
 #include <asm/cache.h>
 #include <asm/io.h>
-#include <fsp_enet.h>
+#include <emac4.h>
 #include <asm/ppc4xx-mal.h>
 
 /*
@@ -136,10 +136,6 @@ void setmal(uint32_t mal_offs, unsigned dcr_offset, uint32_t malval)
 	set_dcr(mal_offs + dcr_offset, malval);
 }
 
-void flush_dcache_all(void)
-{
-}
-
 #define EMAC_RESET_TIMEOUT	  1000	/* 1000 ms reset timeout */
 #define PHY_AUTONEGOTIATE_TIMEOUT 4000	/* 4000 ms autonegotiate timeout */
 
@@ -151,14 +147,13 @@ void flush_dcache_all(void)
 /*----------------------------------------------------------------------------+
  * Global variables. TX and RX descriptors and buffers.
  *---------------------------------------------------------------------------*/
-static struct eth_device eth_dev[EMAC_NUM_DEV];
 static struct emac_440gx_hw_st eth_hw[EMAC_NUM_DEV];
 
-static void tx_descr_init(struct eth_device *dev)
+static void tx_descr_init(struct udevice *dev)
 {
 	int i;
 	char *buf;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->stats.tx_err_index = 0; /* Transmit Error Index for tx_err_log */
 	hw->tx_slot = 0;	/* MAL Transmit Slot */
@@ -185,11 +180,11 @@ static void tx_descr_init(struct eth_device *dev)
 	}
 }
 
-static void rx_descr_init(struct eth_device *dev)
+static void rx_descr_init(struct udevice *dev)
 {
 	int i;
 	char *buf;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->rx_slot = 0;	/* MAL Receive Slot */
 	hw->rx_i_index = 0;	/* Receive Interrupt Queue Index */
@@ -215,9 +210,9 @@ static void rx_descr_init(struct eth_device *dev)
 	}
 }
 
-static void rx_recovery(struct eth_device *dev)
+static void rx_recovery(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t emac_m0;
 
 	/* Do recovery: disable, re-initialize, reenable */
@@ -232,10 +227,10 @@ static void rx_recovery(struct eth_device *dev)
 /*----------------------------------------------------------------------------+
  *  enet_rcv() handles the ethernet receive data
  *---------------------------------------------------------------------------*/
-static void enet_rcv(struct eth_device *dev)
+static void enet_rcv(struct udevice *dev)
 {
 	unsigned long data_len;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	int handled = 0;
 	int i;
@@ -330,10 +325,10 @@ static void enet_rcv(struct eth_device *dev)
 		hw->stats.rx_high_water = handled;
 }
 
-static void mal_reset(struct eth_device *dev)
+static void mal_reset(struct udevice *dev)
 {
 	uint32_t failsafe = 10000;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	/* MAL RESET - I think it is safer if we do the full reset */
 	setmal(hw->mal_offs, MAL0_CFG, MAL_CR_MMSR);
@@ -349,10 +344,10 @@ static void mal_reset(struct eth_device *dev)
 	}
 }
 
-static void mal_reset_channels(struct eth_device *dev)
+static void mal_reset_channels(struct udevice *dev)
 {
 	uint32_t failsafe = 10000;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	/* 1st reset MAL channel */
 	/* Note: writing a 0 to a channel has no effect */
@@ -370,10 +365,10 @@ static void mal_reset_channels(struct eth_device *dev)
 	}
 }
 
-static void emac_reset(struct eth_device *dev)
+static void emac_reset(struct udevice *dev)
 {
 	uint32_t failsafe = 10000;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	out32(EMAC_M0 + hw->hw_addr, EMAC_M0_SRST);
 	while (in32(EMAC_M0 + hw->hw_addr) & EMAC_M0_SRST) {
@@ -386,30 +381,30 @@ static void emac_reset(struct eth_device *dev)
 	}
 }
 
-static void setup_macaddr(struct eth_device *dev)
+static void setup_macaddr(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t reg = 0x00000000;
 
-	reg |= dev->enetaddr[0];	/* set high address */
+	reg |= hw->enetaddr[0];	/* set high address */
 	reg = reg << 8;
-	reg |= dev->enetaddr[1];
+	reg |= hw->enetaddr[1];
 	out32(EMAC_IAH + hw->hw_addr, reg);
 	reg = 0x00000000;
-	reg |= dev->enetaddr[2];	/* set low address  */
+	reg |= hw->enetaddr[2];	/* set low address  */
 	reg = reg << 8;
-	reg |= dev->enetaddr[3];
+	reg |= hw->enetaddr[3];
 	reg = reg << 8;
-	reg |= dev->enetaddr[4];
+	reg |= hw->enetaddr[4];
 	reg = reg << 8;
-	reg |= dev->enetaddr[5];
+	reg |= hw->enetaddr[5];
 	out32(EMAC_IAL + hw->hw_addr, reg);
 }
 
-static void setup_phy_speed(struct eth_device *dev, bd_t *bis)
+static void setup_phy_speed(struct udevice *dev, bd_t *bis)
 {
 	int i, phy_owner, speed, duplex;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t mode_reg, reg;
 	unsigned short reg_short;
 	sys_info_t sysinfo;
@@ -430,14 +425,11 @@ static void setup_phy_speed(struct eth_device *dev, bd_t *bis)
 	phy_owner = ((phy_owner < EMAC_NUM_DEV) ? phy_owner : hw->devnum);
 
 	miiphy_set_curr_emac_offset(hw->emac_offsets[phy_owner]);
-	printf("phy setup\n");
 	if (hw->first_init == 0) {
-		printf("miiphy reset\n");
 		miiphy_reset(dev->name, reg);
 
 		/* Start/Restart autonegotiation */
 		if (hw->phyp.type == PHY_TYPE_NOPHY) {
-			printf("setup aneg\n");
 			phy_setup_aneg(dev->name, reg);
 			udelay (1000);
 		}
@@ -445,7 +437,6 @@ static void setup_phy_speed(struct eth_device *dev, bd_t *bis)
 	/* FIXME interface deprecated, use new phy_read on a phy_device
 	 * found via phy_connect
 	 */
-	printf("read mii_bmsr\n");
 	miiphy_read (dev->name, reg, MII_BMSR, &reg_short);
 
 	/*
@@ -475,9 +466,7 @@ static void setup_phy_speed(struct eth_device *dev, bd_t *bis)
 		puts (" done\n");
 	}
 
-	printf("miiphy speed\n");
 	speed = miiphy_speed(dev->name, reg);
-	printf("miiphy duplex\n");
 	duplex = miiphy_duplex(dev->name, reg);
 
 	if (hw->phyp.speed)
@@ -566,17 +555,17 @@ static void setup_phy_speed(struct eth_device *dev, bd_t *bis)
 
 #define PHY_LED_SELECTOR1	0xB43C /* ENERGY/LINK and ACTIVITY */
 
-static void setup_phy_leds(struct eth_device *dev)
+static void setup_phy_leds(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t reg = hw->phyp.addr;
 	miiphy_write(dev->name, reg, MII_SHADOW, PHY_LED_SELECTOR1);
 }
 
-static void eth_calc_result(struct eth_device *dev)
+static void eth_calc_result(struct udevice *dev)
 {
 	char sret[256];
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t elapsed = hw->stats.time_end - hw->stats.time_start;
 
 	sprintf(sret, "time=%d@%dHz,tx=%d,txp=%d,tx_err=%d,tx_discard=%d,"
@@ -596,10 +585,10 @@ static void eth_calc_result(struct eth_device *dev)
  * FIXME Reset EMAC before resetting MAL. There was a MAL TX and RX
  * hang after Core reset.
  */
-static void fsp_eth_halt(struct eth_device *dev)
+static void emac4_stop(struct udevice *dev)
 {
 	uint32_t msr, mal_txcasr, mal_rxcasr;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->stats.time_end = get_timer(0);
 	eth_calc_result(dev);
@@ -631,20 +620,19 @@ static void fsp_eth_halt(struct eth_device *dev)
 
 /*
  * This function is called whenever a network command is started. The
- * core data structures are already setup in fsp_eth_initialize().
+ * core data structures are already setup in emac4_probe().
  *
  * Malloc MAL buffer desciptors, make sure they are aligned on cache
  * line boundary size (401/403/IOP480 = 16, 405 = 32) and doesn't
  * cross cache block boundaries.
  */
-static int fsp_eth_init(struct eth_device *dev, bd_t * bis)
+static int emac4_start(struct udevice *dev)
 {
 	unsigned long msr;
 	sys_info_t sysinfo;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	env_set("eth_result", NULL);
-	flush_dcache_all();
 
 	/* Clear statistics of this run - discuss: do we want this? */
 	memset(&hw->stats, 0, sizeof(hw->stats));
@@ -654,7 +642,7 @@ static int fsp_eth_init(struct eth_device *dev, bd_t * bis)
 
 	if (!hw->alloc_buf)
 		hw->alloc_buf = malloc(ETH_ALLOC_BUFF_SIZE);
-	if (!hw->alloc_buf) {
+	if (!hw->alloc_buf)  {
 		puts("ERR: No mem alailable!\n");
 		return -1;
 	}
@@ -664,7 +652,7 @@ static int fsp_eth_init(struct eth_device *dev, bd_t * bis)
 
 	/* before doing anything, figure out if we have a MAC address */
 	/* if not, bail */
-	if (memcmp(dev->enetaddr, "\0\0\0\0\0\0", 6) == 0)
+	if (memcmp(hw->enetaddr, "\0\0\0\0\0\0", 6) == 0)
 		return -1;
 
 	/* Need to get the OPB frequency so we can access the PHY */
@@ -678,7 +666,7 @@ static int fsp_eth_init(struct eth_device *dev, bd_t * bis)
 	mtmsr(msr & ~MSR_EE);	/* disable interrupts */
 
 	emac_reset(dev);
-        rgmii_get_mdio(hw->devnum);
+	rgmii_get_mdio(hw->devnum);
 	mal_reset(dev);
 	mal_reset_channels(dev);
 
@@ -732,9 +720,9 @@ static int fsp_eth_init(struct eth_device *dev, bd_t * bis)
 	return 1;
 }
 
-static void handle_xmit(struct eth_device *dev)
+static void handle_xmit(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	while (hw->tx_inq) {
 		uint16_t error;
@@ -761,11 +749,11 @@ static void handle_xmit(struct eth_device *dev)
 	}
 }
 
-static int fsp_eth_send(struct eth_device *dev, void *ptr, int len)
+static int emac4_send(struct udevice *dev, void *ptr, int len)
 {
 	struct enet_frame *ef_ptr;
 	ulong time_start, time_now;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t msr;
 
 	msr = mfmsr();
@@ -796,7 +784,7 @@ static int fsp_eth_send(struct eth_device *dev, void *ptr, int len)
 	ef_ptr = (struct enet_frame *)ptr;
 
 	/* Copy in our address into the frame. */
-	memcpy(ef_ptr->source_addr, dev->enetaddr, ENET_ADDR_LENGTH);
+	memcpy(ef_ptr->source_addr,hw->enetaddr, ENET_ADDR_LENGTH);
 
 	/* If frame is too long or too short, modify length. */
 	/* TBS: where does the fragment go???? */
@@ -832,10 +820,9 @@ static int fsp_eth_send(struct eth_device *dev, void *ptr, int len)
 }
 
 /* FIXME This interrupt never occured. Code is untested and a best guess. */
-static void int_mal_txeob(void *d)
+static void int_mal_txeob(struct udevice *dev)
 {
-	struct eth_device *dev = d;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->mal_txeob_count++;
 	hw->mal_txeobisr = getmal(hw->mal_offs, MAL0_TXEOBISR);
@@ -844,10 +831,9 @@ static void int_mal_txeob(void *d)
 }
 
 /* FIXME This interrupt never occured. Code is untested and a best guess. */
-static void int_mal_serr(void *d)
+static void int_mal_serr(struct udevice *dev)
 {
-	struct eth_device *dev = d;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->mal_serr_count++;
 	hw->stats.rx_err++;
@@ -860,10 +846,9 @@ static void int_mal_serr(void *d)
 	rx_recovery(dev);
 }
 
-static void int_mal_rxeob(void *d)
+static void int_mal_rxeob(struct udevice *dev)
 {
-	struct eth_device *dev = d;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->mal_rxeob_count++;
 	hw->mal_rxeobisr = getmal(hw->mal_offs, MAL0_RXEOBISR);
@@ -877,15 +862,15 @@ static void int_mal_rxeob(void *d)
  * RX Descriptor Error Interrupt happens if no free rx descriptor is
  * available for the MAL (e.g. overflow).
  */
-static int mal_rx_channel_enabled(struct eth_device *dev)
+static int mal_rx_channel_enabled(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	return (getmal(hw->mal_offs, MAL0_RXCASR) & hw->mal_rx_chan_mask);
 }
 
-static void reenable_receive(struct eth_device *dev)
+static void reenable_receive(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->stats.reenable_rx_count++;
 	rx_recovery(dev);
@@ -897,10 +882,9 @@ static void reenable_receive(struct eth_device *dev)
  * recovered in the poll loop, I am trying here a different more local
  * error handling similar to the one done by Eberhad Amanns zBIOS.
  */
-static void int_mal_rxde(void *d)
+static void int_mal_rxde(struct udevice *dev)
 {
-	struct eth_device *dev = d;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->mal_rxde_count++;
 	hw->stats.rx_err++;
@@ -915,10 +899,9 @@ static void int_mal_rxde(void *d)
 }
 
 /* FIXME do recovery */
-static void int_emac(void *d)
+static void int_emac(struct udevice *dev)
 {
-	struct eth_device *dev = d;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->emac_eth_count++;
 	hw->emac_isr = in32(EMAC_ISR + hw->hw_addr);
@@ -987,10 +970,9 @@ static void int_emac(void *d)
  * FIXME This function is untested. I have never seen this interrupt
  * to trigger yet.
  */
-static void int_mal_txde(void *d)
+static void int_mal_txde(struct udevice *dev)
 {
-	struct eth_device *dev = d;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	hw->mal_txde_count++;
 	hw->mal_txdeir = getmal(hw->mal_offs, MAL0_TXDEIR);
@@ -1006,12 +988,30 @@ static void int_mal_txde(void *d)
 	setmal(hw->mal_offs, MAL0_TXDEIR, hw->mal_txdeir);
 }
 
-static int fsp_eth_rx(struct eth_device *dev)
+static int emac4_free_pkt(struct udevice *dev, uchar *packet, int length) {
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
+	enet_wback_inv((void *)packet, ENET_MAX_MTU_ALIGNED);
+
+	/* Free Recv Buffer */
+	hw->rx[user_index].ctrl |= MAL_RX_CTRL_EMPTY;
+
+	/* Free rx buffer descriptor queue */
+	hw->rx_ready[hw->rx_u_index] = -1;
+	hw->rx_u_index++;
+	if (NUM_RX_BUFF == hw->rx_u_index)
+		hw->rx_u_index = 0;
+
+	hw->stats.pkts_handled++;
+	mtmsr(msr);	/* Enable IRQ's */
+	return 0;
+}
+
+static int emac4_recv(struct udevice *dev, int flags, uchar **packet)
 {
 	int length;
 	int user_index;
 	unsigned long msr;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	for (;;) {
 		msr = mfmsr();
@@ -1030,117 +1030,83 @@ static int fsp_eth_rx(struct eth_device *dev)
 		}
 
 		length = hw->rx[user_index].data_len;
-		/* Pass the packet up to the protocol layers. */
-		net_process_received_packet(net_rx_packets[user_index], length - 4);
-		enet_wback_inv((void *)net_rx_packets[user_index],
-			       ENET_MAX_MTU_ALIGNED);
-
-		/* Free Recv Buffer */
-		hw->rx[user_index].ctrl |= MAL_RX_CTRL_EMPTY;
-
-		/* Free rx buffer descriptor queue */
-		hw->rx_ready[hw->rx_u_index] = -1;
-		hw->rx_u_index++;
-		if (NUM_RX_BUFF == hw->rx_u_index)
-			hw->rx_u_index = 0;
-
-		hw->stats.pkts_handled++;
-		mtmsr(msr);	/* Enable IRQ's */
+		*packet = net_rx_packets[user_index];
 	}
 
-	/* irq_enable(hw->mal_irq_rxeob); */
 	return length;
 }
 
-/*
- * FIXME Figure out how to remove the ugly ifdefs.
- */
-int fsp_eth_initialize(bd_t *bis)
+int emac4_probe(struct udevice *dev)
 {
-	struct eth_device *dev;
+	struct eth_pdata *plat = dev_get_platdata(dev);
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	int eth_num = 0;
-	EMAC_440GX_HW_PST hw = NULL;
 
 	/* set phy num and mode */
-	bis->bi_phynum[0] = CONFIG_PHY_ADDR;
-	bis->bi_phynum[1] = CONFIG_PHY1_ADDR;
+	//bis->bi_phynum[0] = CONFIG_PHY_ADDR;
+	//bis->bi_phynum[1] = CONFIG_PHY1_ADDR;
 
+	//for (eth_num = 0; eth_num < EMAC_NUM_DEV; eth_num++) {
 
-	printf("ETH INIT %u\n", EMAC_NUM_DEV);
-	for (eth_num = 0; eth_num < EMAC_NUM_DEV; eth_num++) {
+		//sprintf(dev->name, "%s%d", FSP_ETH_DEVNAME, eth_num);
+	hw->magic = ETH_MAGIC;
+	hw->devnum = eth_num;
+	hw->mal_tx_chan = 0;
+	hw->mal_tx_chan_mask = MAL_CHANNEL_MASK(hw->mal_tx_chan);
+	hw->mal_rx_chan = 0;
+	hw->mal_rx_chan_mask = MAL_CHANNEL_MASK(hw->mal_rx_chan);
 
-		dev = &eth_dev[eth_num];
-		memset(dev, 0, sizeof(*dev));
+	hw->emac_offsets[0] = EMAC0_OFFSET;
+	hw->emac_offsets[1] = EMAC1_OFFSET;
+	hw->hw_addr = hw->emac_offsets[eth_num];
 
-		hw = &eth_hw[eth_num];
-		memset(hw, 0, sizeof(*hw));
+	switch (eth_num) {
+	case 0:
+		hw->mal_offs = 0;
+		memcpy(hw->enetaddr, plat->enetaddr, 6);
 
-		dev->priv = (void *)hw;
-		dev->init = fsp_eth_init;
-		dev->halt = fsp_eth_halt;
-		dev->send = fsp_eth_send;
-		dev->recv = fsp_eth_rx;
+		hw->mal_irq_rxeob = VECNUM_MAL_RXEOB; /* RX EOB */
+		hw->mal_irq_txeob = VECNUM_MAL_TXEOB; /* TX EOB */
+		hw->mal_irq_rxde  = VECNUM_MAL_RXDE; /* RX DE */
+		hw->mal_irq_txde  = VECNUM_MAL_TXDE; /* TX DE */
+		hw->emac_irq_eth  = VECNUM_ETH0; /* EMAC */
+		hw->mal_irq_serr  = VECNUM_MAL_SERR; /* SERR */
+		break;
+	case 1:
+		hw->mal_offs = MAL1_OFFSET;
+		memcpy(hw->enetaddr, bis->bi_enet1addr, 6);
+		hw->mal_irq_rxeob = VECNUM_MAL1_RXEOB;
+		hw->mal_irq_txeob = VECNUM_MAL1_TXEOB;
+		hw->mal_irq_rxde  = VECNUM_MAL1_RXDE;
+		hw->mal_irq_txde  = VECNUM_MAL1_TXDE;
+		hw->emac_irq_eth  = VECNUM_ETH1; /* EMAC */
+		hw->mal_irq_serr  = VECNUM_MAL1_SERR;
+		break;
+	}
 
-		sprintf(dev->name, "%s%d", FSP_ETH_DEVNAME, eth_num);
-
-		hw->magic = ETH_MAGIC;
-		hw->devnum = eth_num;
-		hw->mal_tx_chan = 0;
-		hw->mal_tx_chan_mask = MAL_CHANNEL_MASK(hw->mal_tx_chan);
-		hw->mal_rx_chan = 0;
-		hw->mal_rx_chan_mask = MAL_CHANNEL_MASK(hw->mal_rx_chan);
-
-		hw->emac_offsets[0] = EMAC0_OFFSET;
-		hw->emac_offsets[1] = EMAC1_OFFSET;
-		hw->hw_addr = hw->emac_offsets[eth_num];
-
-		switch (eth_num) {
-		case 0:
-			hw->mal_offs = 0;
-			memcpy(dev->enetaddr, bis->bi_enetaddr, 6);
-
-			hw->mal_irq_rxeob = VECNUM_MAL_RXEOB; /* RX EOB */
-			hw->mal_irq_txeob = VECNUM_MAL_TXEOB; /* TX EOB */
-			hw->mal_irq_rxde  = VECNUM_MAL_RXDE; /* RX DE */
-			hw->mal_irq_txde  = VECNUM_MAL_TXDE; /* TX DE */
-			hw->emac_irq_eth  = VECNUM_ETH0; /* EMAC */
-			hw->mal_irq_serr  = VECNUM_MAL_SERR; /* SERR */
-			break;
-		case 1:
-			hw->mal_offs = MAL1_OFFSET;
-			memcpy(dev->enetaddr, bis->bi_enet1addr, 6);
-			hw->mal_irq_rxeob = VECNUM_MAL1_RXEOB;
-			hw->mal_irq_txeob = VECNUM_MAL1_TXEOB;
-			hw->mal_irq_rxde  = VECNUM_MAL1_RXDE;
-			hw->mal_irq_txde  = VECNUM_MAL1_TXDE;
-			hw->emac_irq_eth  = VECNUM_ETH1; /* EMAC */
-			hw->mal_irq_serr  = VECNUM_MAL1_SERR;
-			break;
-		}
-
-		setmal(hw->mal_offs, MAL0_ESR,    0xffffffff); /* Clear irqs */
-		setmal(hw->mal_offs, MAL0_TXDEIR, 0xffffffff);
-		setmal(hw->mal_offs, MAL0_RXDEIR, 0xffffffff);
-		setmal(hw->mal_offs, MAL0_IER,
-		       (MAL_IER_PT  | /* PLB Timeout */
-			MAL_IER_PRE | /* PLB Read Err */
-			MAL_IER_PWE | /* PLB Write Error Interrupt */
-			MAL_IER_DE  | /* Descriptor Error Interrupt */
-			MAL_IER_OTE | /* OPB Timeout Error Interrupt */
-			MAL_IER_OE  | /* OPB Slave Error Interrupt */
-			MAL_IER_PE)); /* OPB MRQ Interrupt */
-		irq_install_handler(hw->mal_irq_txeob, int_mal_txeob, dev);
-		irq_install_handler(hw->mal_irq_rxeob, int_mal_rxeob, dev);
-		irq_install_handler(hw->mal_irq_txde, int_mal_txde, dev);
-		irq_install_handler(hw->mal_irq_rxde, int_mal_rxde, dev);
-		irq_install_handler(hw->emac_irq_eth, int_emac, dev);
-		irq_install_handler(hw->mal_irq_serr, int_mal_serr, dev);
-		miiphy_init_phy_params(&hw->phyp, hw->devnum);
-                miiphy_set_curr_emac_offset(hw->emac_offsets[hw->phyp.owner]);
-		rgmii_get_mdio(hw->devnum);
-		setup_phy_leds(dev);
-		rgmii_put_mdio(hw->devnum);
-		eth_register (dev);
+	setmal(hw->mal_offs, MAL0_ESR,    0xffffffff); /* Clear irqs */
+	setmal(hw->mal_offs, MAL0_TXDEIR, 0xffffffff);
+	setmal(hw->mal_offs, MAL0_RXDEIR, 0xffffffff);
+	setmal(hw->mal_offs, MAL0_IER,
+	       (MAL_IER_PT  | /* PLB Timeout */
+		MAL_IER_PRE | /* PLB Read Err */
+		MAL_IER_PWE | /* PLB Write Error Interrupt */
+		MAL_IER_DE  | /* Descriptor Error Interrupt */
+		MAL_IER_OTE | /* OPB Timeout Error Interrupt */
+		MAL_IER_OE  | /* OPB Slave Error Interrupt */
+		MAL_IER_PE)); /* OPB MRQ Interrupt */
+	irq_install_handler(hw->mal_irq_txeob, int_mal_txeob, dev);
+	irq_install_handler(hw->mal_irq_rxeob, int_mal_rxeob, dev);
+	irq_install_handler(hw->mal_irq_txde, int_mal_txde, dev);
+	irq_install_handler(hw->mal_irq_rxde, int_mal_rxde, dev);
+	irq_install_handler(hw->emac_irq_eth, int_emac, dev);
+	irq_install_handler(hw->mal_irq_serr, int_mal_serr, dev);
+	miiphy_init_phy_params(&hw->phyp, hw->devnum);
+	miiphy_set_curr_emac_offset(hw->emac_offsets[hw->phyp.owner]);
+	rgmii_get_mdio(hw->devnum);
+	setup_phy_leds(dev);
+	rgmii_put_mdio(hw->devnum);
+	eth_register(dev);
 
 #if  defined(CONFIG_PHYLIB) || defined(CONFIG_CMD_MII)
 	int retval;
@@ -1157,20 +1123,13 @@ int fsp_eth_initialize(bd_t *bis)
 		return retval;
 #endif
 
-		//fsp_eth_init(dev, bis);
-	}
 	return 1;
 }
 
-int ppc_4xx_eth_initialize(bd_t *bis)
-{
-	return fsp_eth_initialize(bis);
-}
-
-static void eth_print_buffers(struct eth_device *dev)
+static void eth_print_buffers(struct udevice *dev)
 {
 	int i;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	if ((!hw) || (!hw->tx) || (!hw->rx))
 		return;
@@ -1201,11 +1160,6 @@ static void eth_print_buffers(struct eth_device *dev)
 		if (i & 1)
 			putc('\n');
 	}
-	/* printf(" rx_ready: ");
-	 * for (i = 0; i < NUM_RX_BUFF; i++)
-	 *	printf("%d ", hw->rx_ready[i]);
-	 * printf("\n");
-	 */
 }
 
 static void print_emac_isr(uint32_t emac_isr)
@@ -1271,10 +1225,10 @@ static void print_mal_esr(uint32_t mal_esr)
 		printf("  PLB MIRQ has occured\n");
 }
 
-static void eth_print_stats(struct eth_device *dev)
+static void eth_print_stats(struct udevice *dev)
 {
 	int i;
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 	uint32_t elapsed = hw->stats.time_end - hw->stats.time_start;
 
 	printf(" pkts_rx ..........: %d\n"
@@ -1331,9 +1285,9 @@ static void eth_print_stats(struct eth_device *dev)
 }
 
 #if defined(CFG_EXTENDED_REGISTER_DUMP)
-static void eth_dump_regs(struct eth_device *dev)
+static void eth_dump_regs(struct udevice *dev)
 {
-	EMAC_440GX_HW_PST hw = dev->priv;
+	EMAC_440GX_HW_PST hw = dev_get_priv(dev);
 
 	printf("Eth Register Dump:\n");
 	print_mal_esr(getmal(hw->mal_offs, MAL0_ESR));
@@ -1357,7 +1311,7 @@ static void eth_dump_regs(struct eth_device *dev)
 }
 #endif /* defined(CFG_EXTENDED_REGISTER_DUMP) */
 
-static void eth_print_errors(struct eth_device *dev)
+static void eth_print_errors(struct udevice *dev)
 {
 	printf("Interface: %s\n", dev->name);
 	eth_print_buffers(dev);
@@ -1367,29 +1321,12 @@ static void eth_print_errors(struct eth_device *dev)
 #endif
 }
 
-static int do_ethinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	struct eth_device *dev = eth_get_dev();
-
-	if (!dev)
-		return -1;
-	eth_print_errors(dev);
-	return 0;
-}
-
-U_BOOT_CMD(ethinfo, CONFIG_SYS_MAXARGS, 1, do_ethinfo,
-	   "Print eth driver debug info\n",
-	   ""
-);
-
-/*
 static const struct eth_ops emac4_ops = {
 	.start		= emac4_start,
 	.send		= emac4_send,
 	.recv		= emac4_recv,
-	.free_pkt	= emac4_free_pkt,
 	.stop		= emac4_stop,
-	.write_hwaddr	= emac4_write_hwaddr,
+	.free_pkt	= emac4_free_pkt,
 };
 
 static const struct udevice_id emac4_ids[] = {
@@ -1402,9 +1339,8 @@ U_BOOT_DRIVER(emac4) = {
 	.id	= UCLASS_ETH,
 	.of_match = emac4_ids,
 	.ops	= &emac4_ops,
-	.ofdata_to_platdata = emac4_ofdata_to_platdata,
-	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
-	.priv_auto_alloc_size = sizeof(struct emac4_priv),
 	.probe	= emac4_probe,
+	.bind	= emac4_bind,
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct emac_440gx_hw_st),
 }
-*/

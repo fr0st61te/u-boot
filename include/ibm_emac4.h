@@ -326,6 +326,7 @@ typedef struct emac_440gx_hw_st {
 	uint32_t hw_addr;	/* EMAC offset */
 	uint32_t phy_id;
 	uint32_t phy_addr;
+	unsigned char enetaddr[6];
 	uint32_t mal_offs;	/* MAL offset */
 
 	/* Buffer layout (cache-line aligned):
