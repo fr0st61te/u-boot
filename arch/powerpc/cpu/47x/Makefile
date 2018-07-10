@@ -21,7 +21,7 @@ obj-y	+= speed.o
 obj-y	+= tlb.o
 obj-y	+= traps.o
 obj-y	+= uic.o
-obj-$(CONFIG_CMD_REGINFO) += reginfo.o
+obj-$(CONFIG_CMD_REGINFO)	+= reginfo.o
 obj-$(CONFIG_CMD_CHIP_CONFIG)	+= cmd_chip_config.o
 ifdef CONFIG_SPL_BUILD
 obj-y	+= spl_boot.o
