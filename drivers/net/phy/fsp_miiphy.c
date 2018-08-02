@@ -55,7 +55,7 @@
 #include <miiphy.h>		/* official u-boot interface to the outside */
 #include <asm/io.h>
 #include <asm/processor.h>
-#include <fsp_enet.h>
+#include <ibm_emac4.h>
 
 #define DEBUG
 #if defined(DEBUG)
